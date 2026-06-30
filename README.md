@@ -150,6 +150,21 @@ SQLite (data/citizens.sqlite)
 
 ---
 
+---
+
+## Hospedagem (produção)
+
+**Não precisa de outro projeto** — o mesmo repositório, dois deploys:
+
+| Parte | Plataforma | Pasta |
+|-------|------------|-------|
+| Frontend | Vercel ou Netlify | `frontend/` → `dist/` |
+| Backend | Render ou Railway | `backend/` (Node + SQLite) |
+
+Guia completo passo a passo: **[docs/DEPLOY.md](docs/DEPLOY.md)**
+
+---
+
 ## Como rodar
 
 ### Opção rápida (backend + frontend juntos)
