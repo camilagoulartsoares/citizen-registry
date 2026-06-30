@@ -38,14 +38,20 @@ const showNotFound = computed(() => searched.value && !result.value && !loading)
 <template>
   <div>
     <v-form @submit.prevent="handleSearch">
-      <v-text-field
-        :model-value="query"
-        label="Nome ou CPF"
-        placeholder="Digite o nome ou CPF para consultar"
-        prepend-inner-icon="mdi-magnify"
-        :disabled="loading"
-        @update:model-value="onQueryInput"
-      />
+      <div class="mb-6">
+        <label class="ui-field-label">Buscar por nome ou CPF</label>
+        <v-text-field
+          :model-value="query"
+          placeholder="Digite o nome completo ou CPF"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+          class="field-input"
+          prepend-inner-icon="mdi-magnify"
+          :disabled="loading"
+          @update:model-value="onQueryInput"
+        />
+      </div>
 
       <v-alert
         v-if="error"
@@ -61,13 +67,13 @@ const showNotFound = computed(() => searched.value && !result.value && !loading)
 
       <v-btn
         type="submit"
-        color="primary"
-        size="large"
         block
+        class="ui-btn-primary"
         :disabled="!query.trim() || loading"
         :loading="loading"
       >
         Consultar
+        <v-icon end size="18">mdi-magnify</v-icon>
       </v-btn>
     </v-form>
 

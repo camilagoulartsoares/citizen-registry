@@ -60,39 +60,25 @@ watch(currentPage, () => {
 
 <template>
   <div>
-    <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between mb-6 ga-4">
-      <div>
-        <h1 class="text-h5 font-weight-bold text-primary mb-1">
-          Lista de Cidadãos
-        </h1>
-        <p class="text-body-2 text-medium-emphasis mb-0">
-          {{ totalItems }} {{ totalItems === 1 ? 'registro encontrado' : 'registros encontrados' }}
-        </p>
-      </div>
-
-      <v-btn
-        to="/"
-        variant="outlined"
-        color="primary"
-        prepend-icon="mdi-arrow-left"
-      >
-        Voltar ao início
-      </v-btn>
-    </div>
-
-    <v-card class="pa-4 mb-4">
+    <div class="ui-card mb-4">
+      <label class="ui-field-label">Buscar por nome ou CPF</label>
       <v-text-field
         :model-value="searchQuery"
-        label="Buscar por nome ou CPF"
         placeholder="Filtrar em tempo real..."
+        variant="outlined"
+        density="comfortable"
+        hide-details
+        class="field-input"
         prepend-inner-icon="mdi-magnify"
         clearable
-        hide-details
         :disabled="loading"
         @update:model-value="onSearchInput"
         @click:clear="onSearchInput('')"
       />
-    </v-card>
+      <p class="list-meta mt-3 mb-0">
+        {{ totalItems }} {{ totalItems === 1 ? 'registro encontrado' : 'registros encontrados' }}
+      </p>
+    </div>
 
     <v-alert
       v-if="error"
@@ -105,24 +91,24 @@ watch(currentPage, () => {
       {{ error }}
     </v-alert>
 
-    <v-card>
+    <div class="ui-card pa-0 overflow-hidden">
       <CitizenTable :citizens="citizens" :loading="loading">
         <template #empty>
           <div class="text-center py-12 px-4">
-            <v-icon size="80" color="grey-lighten-1" class="mb-4">
+            <v-icon size="64" color="#D1D5DB" class="mb-4">
               mdi-account-off-outline
             </v-icon>
-            <h3 class="text-h6 text-medium-emphasis mb-2">
+            <h3 class="empty-title mb-2">
               Nenhum cidadão encontrado
             </h3>
-            <p class="text-body-2 text-medium-emphasis mb-6">
+            <p class="empty-subtitle mb-6">
               {{
                 searchQuery
                   ? 'Tente ajustar os termos da busca.'
                   : 'Ainda não há cidadãos cadastrados no sistema.'
               }}
             </p>
-            <v-btn to="/" color="primary" prepend-icon="mdi-account-plus">
+            <v-btn to="/cadastrar" class="ui-btn-primary text-none" prepend-icon="mdi-account-plus-outline">
               Cadastrar primeiro cidadão
             </v-btn>
           </div>
@@ -137,10 +123,28 @@ watch(currentPage, () => {
           :length="totalPages"
           :total-visible="5"
           color="primary"
-          rounded
+          rounded="circle"
           @update:model-value="onPageChange"
         />
       </div>
-    </v-card>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.list-meta {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.empty-subtitle {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+</style>

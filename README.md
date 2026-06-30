@@ -19,7 +19,22 @@ Acesse: http://localhost:5173
 
 ## Como rodar sem Docker
 
-### Backend
+### Opção rápida (backend + frontend juntos)
+
+Na raiz do projeto:
+
+```bash
+npm install
+npm run install:all
+npm run dev
+```
+
+- Backend: http://localhost:3000
+- Frontend: http://localhost:5173 (ou próxima porta livre)
+
+### Separado
+
+#### Backend
 
 ```bash
 cd backend
@@ -27,12 +42,33 @@ npm install
 npm run dev
 ```
 
-### Frontend
+#### Frontend
 
 ```bash
 cd frontend
 npm install
 npm run dev
+```
+
+## Integração Frontend ↔ Backend
+
+O frontend se comunica com o backend via proxy do Vite em desenvolvimento:
+
+- Requisições vão para `/api/*` (ex: `/api/citizens`)
+- O Vite redireciona para `http://localhost:3000/*`
+- Configuração em `frontend/.env.development`
+
+Para testar manualmente:
+
+1. Cadastre um cidadão na home com CPF válido (ex: `529.982.247-25`)
+2. Use a busca com o nome ou CPF cadastrado
+3. Acesse **Lista de Cidadãos** para ver a tabela paginada
+
+Verifique se o backend está ativo:
+
+```bash
+curl http://localhost:3000/health
+# {"status":"ok"}
 ```
 
 ## Como rodar os testes

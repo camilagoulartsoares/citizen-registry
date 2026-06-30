@@ -6,6 +6,7 @@ import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
+import '@/assets/styles/main.css'
 
 const vuetify = createVuetify({
   components,
@@ -15,10 +16,11 @@ const vuetify = createVuetify({
     themes: {
       light: {
         colors: {
-          primary: '#1B6B4A',
-          success: '#4CAF50',
-          error: '#F44336',
-          background: '#F5F5F5',
+          primary: '#2E5FA8',
+          secondary: '#8DC63F',
+          success: '#8DC63F',
+          error: '#DC2626',
+          background: '#F8F9FA',
           surface: '#FFFFFF',
         },
       },
@@ -26,7 +28,7 @@ const vuetify = createVuetify({
   },
   defaults: {
     VCard: {
-      elevation: 2,
+      elevation: 0,
       rounded: 'lg',
     },
     VBtn: {

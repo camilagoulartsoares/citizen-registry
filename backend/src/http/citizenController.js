@@ -3,9 +3,9 @@ const {
   DuplicateCpfError,
   InvalidCpfError,
   InvalidNameError,
-} = require('../../application/RegisterCitizen')
-const FindCitizen = require('../../application/FindCitizen')
-const ListCitizens = require('../../application/ListCitizens')
+} = require('../application/RegisterCitizen')
+const FindCitizen = require('../application/FindCitizen')
+const ListCitizens = require('../application/ListCitizens')
 
 /**
  * Controller HTTP para operações com cidadãos.

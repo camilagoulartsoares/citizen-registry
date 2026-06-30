@@ -59,14 +59,14 @@ function formatDate(dateStr) {
     <template #item.name="{ item }">
       <div class="d-flex align-center py-2">
         <v-avatar color="primary" size="32" class="mr-3">
-          <v-icon color="white" size="small">mdi-account</v-icon>
+          <v-icon color="white" size="small">mdi-account-outline</v-icon>
         </v-avatar>
-        <span class="font-weight-medium">{{ item.name }}</span>
+        <span class="table-name">{{ item.name }}</span>
       </div>
     </template>
 
     <template #item.cpfFormatted="{ item }">
-      <v-chip size="small" variant="tonal" color="primary">
+      <v-chip size="small" variant="tonal" color="primary" class="font-weight-medium">
         {{ item.cpfFormatted }}
       </v-chip>
     </template>
@@ -79,6 +79,23 @@ function formatDate(dateStr) {
 
 <style scoped>
 .citizen-table {
-  background-color: #ffffff;
+  background: transparent;
+}
+
+.table-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+:deep(.v-data-table-header__content) {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+:deep(.v-data-table__td) {
+  font-size: 14px;
+  color: var(--color-text);
 }
 </style>

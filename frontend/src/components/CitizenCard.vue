@@ -27,29 +27,49 @@ const formattedDate = computed(() => {
 </script>
 
 <template>
-  <v-card class="citizen-card pa-4" variant="outlined">
+  <div class="citizen-card">
     <div class="d-flex align-center mb-3">
       <v-avatar color="primary" size="40" class="mr-3">
-        <v-icon color="white">mdi-account</v-icon>
+        <v-icon color="white" size="20">mdi-account-outline</v-icon>
       </v-avatar>
       <div>
-        <div class="text-subtitle-1 font-weight-medium">{{ citizen.name }}</div>
-        <div class="text-body-2 text-medium-emphasis">CPF: {{ citizen.cpfFormatted }}</div>
+        <div class="citizen-card__name">{{ citizen.name }}</div>
+        <div class="citizen-card__cpf">CPF: {{ citizen.cpfFormatted }}</div>
       </div>
     </div>
 
     <v-divider v-if="showDate" class="mb-3" />
 
-    <div v-if="showDate" class="d-flex align-center text-body-2 text-medium-emphasis">
-      <v-icon size="small" class="mr-2">mdi-calendar</v-icon>
+    <div v-if="showDate" class="citizen-card__date">
+      <v-icon size="16" class="mr-1">mdi-calendar-outline</v-icon>
       Cadastrado em {{ formattedDate }}
     </div>
-  </v-card>
+  </div>
 </template>
 
 <style scoped>
 .citizen-card {
-  background-color: #ffffff;
-  border-color: rgba(27, 107, 74, 0.15) !important;
+  background: #f9fafb;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.citizen-card__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.citizen-card__cpf {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.citizen-card__date {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 </style>
