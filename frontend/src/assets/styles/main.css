@@ -611,6 +611,87 @@ body {
   color: #6b7280;
 }
 
+.app-modal__title--block {
+  display: block;
+  margin-bottom: 24px;
+  padding-right: 28px;
+}
+
+.app-modal__actions--end {
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.app-modal__btn--outline-green {
+  min-width: 120px;
+  background: #fff;
+  border-color: #0b6a3e;
+  color: #0b6a3e;
+}
+
+.app-modal__btn--outline-green:hover {
+  background: #f0fdf4;
+  border-color: #095c35;
+  color: #095c35;
+}
+
+.app-modal--view {
+  padding-bottom: 28px;
+}
+
+.citizen-detail {
+  border: 1px solid #f3f4f6;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.citizen-detail__row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.citizen-detail__row--last {
+  border-bottom: none;
+}
+
+.citizen-detail__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e8f5ee;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.citizen-detail__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.citizen-detail__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  line-height: 1.2;
+}
+
+.citizen-detail__value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
 .ui-btn-primary {
   background: var(--color-primary) !important;
   color: #fff !important;

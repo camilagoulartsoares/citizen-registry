@@ -5,6 +5,7 @@ import { useCpfMask } from '@/composables/useCpfMask'
 import AppPageTabs from '@/components/AppPageTabs.vue'
 import CitizenTable from '@/components/CitizenTable.vue'
 import TablePagination from '@/components/TablePagination.vue'
+import CitizenViewDialog from '@/components/CitizenViewDialog.vue'
 import CitizenEditDialog from '@/components/CitizenEditDialog.vue'
 import CitizenAttentionDialog from '@/components/CitizenAttentionDialog.vue'
 import CitizenDeleteDialog from '@/components/CitizenDeleteDialog.vue'
@@ -221,28 +222,11 @@ onMounted(fetchCitizens)
     </p>
 
     <!-- Visualizar -->
-    <v-dialog v-model="viewDialog" max-width="480">
-      <v-card class="pa-6" rounded="lg">
-        <h3 class="dialog-title mb-4">Detalhes do cidadão</h3>
-        <div v-if="selectedCitizen" class="dialog-details">
-          <div class="dialog-row">
-            <span class="dialog-label">Nome</span>
-            <span>{{ selectedCitizen.name }}</span>
-          </div>
-          <div class="dialog-row">
-            <span class="dialog-label">CPF</span>
-            <span>{{ selectedCitizen.cpfFormatted }}</span>
-          </div>
-          <div class="dialog-row">
-            <span class="dialog-label">Data de cadastro</span>
-            <span>{{ formatViewDate(selectedCitizen.createdAt) }}</span>
-          </div>
-        </div>
-        <div class="d-flex justify-end mt-4">
-          <v-btn variant="text" class="text-none" @click="viewDialog = false">Fechar</v-btn>
-        </div>
-      </v-card>
-    </v-dialog>
+    <CitizenViewDialog
+      v-model="viewDialog"
+      :citizen="selectedCitizen"
+      :created-at-label="selectedCitizen ? formatViewDate(selectedCitizen.createdAt) : '—'"
+    />
 
     <!-- Editar -->
     <CitizenEditDialog
