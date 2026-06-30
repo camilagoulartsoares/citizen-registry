@@ -46,7 +46,7 @@ O arquivo `vercel.json` na raiz do repositório já configura build em `frontend
 |---------|-----|
 | **Swagger UI** | http://localhost:3000/api-docs |
 | **OpenAPI JSON** | http://localhost:3000/api-docs.json |
-| **Frontend** | http://localhost:5173 |
+| **Frontend** | http://localhost:5174 |
 | **Health check** | http://localhost:3000/health |
 
 ---
@@ -183,7 +183,7 @@ SQLite (data/citizens.sqlite)
 | Parte | Plataforma | URL / pasta |
 |-------|------------|-------------|
 | Frontend | [Vercel](https://citizen-registry-system.vercel.app) | `frontend/` → https://citizen-registry-system.vercel.app |
-| Backend | [Render](https://citizen-registry-system-backend.onrender.com) | `backend/` → https://citizen-registry-system-backend.onrender.com |
+| Backend | [Render — Swagger](https://citizen-registry-system-backend.onrender.com/api-docs) | `backend/` |
 | Swagger | Render | https://citizen-registry-system-backend.onrender.com/api-docs |
 
 Guia completo passo a passo: **[docs/DEPLOY.md](docs/DEPLOY.md)**
@@ -203,7 +203,7 @@ npm run dev
 ```
 
 - Backend: http://localhost:3000
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:5174
 - Health check: `curl http://localhost:3000/health` → `{"status":"ok"}`
 - **Swagger UI:** http://localhost:3000/api-docs
 
@@ -223,7 +223,7 @@ cd frontend && npm install && npm run dev
 docker-compose up
 ```
 
-Acesse: http://localhost:5173
+Acesse: http://localhost:5174
 
 ### Testes automatizados (backend)
 
