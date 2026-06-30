@@ -120,8 +120,8 @@ function resetForm() {
       </div>
     </div>
 
-    <v-form v-else @submit.prevent="handleSubmit">
-      <div class="mb-5">
+    <v-form v-else class="citizen-form" @submit.prevent="handleSubmit">
+      <div class="mb-5 form-field">
         <label class="ui-field-label">Nome completo</label>
         <v-text-field
           v-model="name"
@@ -134,50 +134,62 @@ function resetForm() {
           :disabled="loading"
           @update:model-value="onNameInput"
         />
-        <div v-if="showNameInvalid" class="field-hint field-hint--error mt-2">
-          <v-icon color="error" size="18">mdi-close-circle-outline</v-icon>
-          <span>{{ NAME_VALIDATION_MESSAGE }}</span>
+        <div class="field-hint-slot" aria-live="polite">
+          <div
+            class="field-hint field-hint--error"
+            :class="{ 'field-hint--hidden': !showNameInvalid }"
+          >
+            <v-icon color="error" size="18">mdi-close-circle-outline</v-icon>
+            <span>{{ NAME_VALIDATION_MESSAGE }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="mb-6">
+      <div class="mb-6 form-field">
         <label class="ui-field-label">CPF</label>
-        <div class="cpf-row">
-          <div class="cpf-row__field">
-            <v-text-field
-              :model-value="cpf"
-              placeholder="000.000.000-00"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              class="field-input"
-              prepend-inner-icon="mdi-card-account-details-outline"
-              :disabled="loading"
-              maxlength="14"
-              @update:model-value="onCpfInput"
-            />
-          </div>
-
-          <div v-if="showCpfInvalid" class="cpf-row__status">
+        <v-text-field
+          :model-value="cpf"
+          placeholder="000.000.000-00"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+          class="field-input"
+          prepend-inner-icon="mdi-card-account-details-outline"
+          :disabled="loading"
+          maxlength="14"
+          @update:model-value="onCpfInput"
+        />
+        <div class="field-hint-slot field-hint-slot--cpf" aria-live="polite">
+          <div
+            class="field-hint field-hint--error"
+            :class="{ 'field-hint--hidden': !showCpfInvalid }"
+          >
             <v-icon color="error" size="20">mdi-close-circle-outline</v-icon>
-            <span class="cpf-row__status-text cpf-row__status-text--error">CPF inválido</span>
+            <span>CPF inválido</span>
           </div>
 
-          <div v-else-if="showCpfDuplicate" class="cpf-row__status">
+          <div
+            class="field-hint field-hint--error"
+            :class="{ 'field-hint--hidden': !showCpfDuplicate }"
+          >
             <v-icon color="error" size="20">mdi-close-circle-outline</v-icon>
-            <span class="cpf-row__status-text cpf-row__status-text--error">
-              Este CPF já está cadastrado no sistema.
-            </span>
+            <span>Este CPF já está cadastrado no sistema.</span>
           </div>
 
-          <div v-else-if="cpfChecking" class="cpf-row__status">
+          <div
+            class="field-hint field-hint--checking"
+            :class="{ 'field-hint--hidden': !cpfChecking }"
+          >
             <v-progress-circular indeterminate size="18" width="2" color="primary" />
-            <span class="cpf-row__status-text">Verificando CPF...</span>
+            <span>Verificando CPF...</span>
           </div>
 
-          <div v-else-if="showCpfValid" class="cpf-row__status">
+          <div
+            class="field-hint field-hint--success"
+            :class="{ 'field-hint--hidden': !showCpfValid }"
+          >
             <v-icon color="success" size="20">mdi-check-circle-outline</v-icon>
-            <span class="cpf-row__status-text cpf-row__status-text--success">CPF válido</span>
+            <span>CPF válido</span>
           </div>
         </div>
       </div>
@@ -185,7 +197,7 @@ function resetForm() {
       <v-btn
         type="submit"
         block
-        class="ui-btn-primary"
+        class="ui-btn-primary citizen-form__submit"
         :disabled="!isFormValid || loading"
         :loading="loading"
       >
@@ -216,5 +228,15 @@ function resetForm() {
 .success-panel__cpf {
   font-size: 14px;
   color: var(--color-text-muted);
+}
+
+.citizen-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.citizen-form__submit {
+  margin-top: auto;
 }
 </style>

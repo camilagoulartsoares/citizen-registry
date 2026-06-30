@@ -254,9 +254,38 @@ body {
 
 .field-hint {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   font-size: 13px;
+  line-height: 1.4;
+}
+
+.field-hint--hidden {
+  visibility: hidden;
+}
+
+.field-hint--success {
+  color: var(--color-success);
+}
+
+.field-hint--checking {
+  color: var(--color-text-muted);
+}
+
+.field-hint-slot {
+  position: relative;
+  min-height: 24px;
+  margin-top: 8px;
+}
+
+.field-hint-slot--cpf {
+  min-height: 44px;
+}
+
+.field-hint-slot .field-hint {
+  position: absolute;
+  inset: 0;
+  margin-top: 0;
 }
 
 .field-hint--error {
@@ -1163,6 +1192,23 @@ body {
 @media (min-width: 961px) {
   .home-cards .v-col {
     display: flex;
+  }
+
+  .home-cards .ui-card--home {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .home-cards .ui-card__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 300px;
+  }
+
+  .home-cards .ui-card__body > * {
+    flex: 1;
   }
 }
 
