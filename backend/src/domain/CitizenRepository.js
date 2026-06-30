@@ -1,6 +1,5 @@
 /**
- * Interface do repositório de cidadãos.
- * Implementações concretas ficam na camada de Infrastructure.
+ * Contrato do repositório de cidadãos (implementado por SQLiteRepository).
  */
 class CitizenRepository {
   async create(_citizen) {

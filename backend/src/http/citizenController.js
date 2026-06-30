@@ -6,16 +6,12 @@ const {
 } = require('../application/RegisterCitizen')
 const FindCitizen = require('../application/FindCitizen')
 const ListCitizens = require('../application/ListCitizens')
-const { GetCitizen } = require('../application/GetCitizen')
+const { GetCitizen, CitizenNotFoundError } = require('../application/GetCitizen')
 const UpdateCitizen = require('../application/UpdateCitizen')
 const DeleteCitizen = require('../application/DeleteCitizen')
 const ExportCitizens = require('../application/ExportCitizens')
 const { citizensToCsv } = require('../infrastructure/csvExport')
-const { CitizenNotFoundError } = require('../application/GetCitizen')
 
-/**
- * Controller HTTP para operações com cidadãos.
- */
 class CitizenController {
   constructor(useCases) {
     Object.assign(this, useCases)

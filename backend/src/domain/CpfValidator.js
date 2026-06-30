@@ -1,17 +1,8 @@
-/**
- * Validador de CPF brasileiro com algoritmo de dígitos verificadores.
- */
 class CpfValidator {
-  /**
-   * Remove caracteres não numéricos do CPF.
-   */
   static sanitize(cpf) {
     return String(cpf ?? '').replace(/\D/g, '')
   }
 
-  /**
-   * Valida CPF conforme regras da Receita Federal.
-   */
   static isValid(cpf) {
     const digits = CpfValidator.sanitize(cpf)
 

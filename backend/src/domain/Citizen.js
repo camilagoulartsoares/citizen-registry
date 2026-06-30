@@ -1,6 +1,3 @@
-/**
- * Entidade de domínio representando um cidadão cadastrado.
- */
 class Citizen {
   constructor({ id, name, cpf, createdAt }) {
     this.id = id

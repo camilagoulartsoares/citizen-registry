@@ -1,6 +1,3 @@
-/**
- * Caso de uso: exportar cidadãos para CSV (com filtro opcional).
- */
 class ExportCitizens {
   constructor(citizenRepository) {
     this.citizenRepository = citizenRepository

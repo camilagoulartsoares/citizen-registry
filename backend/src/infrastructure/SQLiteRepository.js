@@ -4,16 +4,6 @@ const Citizen = require('../domain/Citizen')
 const CitizenRepository = require('../domain/CitizenRepository')
 const CpfValidator = require('../domain/CpfValidator')
 
-function ensureColumn(db, table, column, definition) {
-  const columns = db.prepare(`PRAGMA table_info(${table})`).all()
-  if (!columns.some((col) => col.name === column)) {
-    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
-  }
-}
-
-/**
- * Inicializa conexão SQLite e cria tabela se necessário.
- */
 function createDatabase(dbPath) {
   const resolvedPath = dbPath || path.join(__dirname, '../../data/citizens.sqlite')
   const db = new Database(resolvedPath)
@@ -37,9 +27,6 @@ const SELECT_FIELDS = `
   id, name, cpf, created_at AS createdAt
 `
 
-/**
- * Implementação SQLite do repositório de cidadãos.
- */
 class SQLiteRepository extends CitizenRepository {
   constructor(db) {
     super()

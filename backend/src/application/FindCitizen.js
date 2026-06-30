@@ -1,8 +1,5 @@
 const CpfValidator = require('../domain/CpfValidator')
 
-/**
- * Caso de uso: buscar cidadão por nome ou CPF.
- */
 class FindCitizen {
   constructor(citizenRepository) {
     this.citizenRepository = citizenRepository
@@ -14,7 +11,6 @@ class FindCitizen {
       return []
     }
 
-    // Se parecer CPF, sanitiza para busca numérica
     const sanitized = CpfValidator.sanitize(trimmedQuery)
     const searchTerm = sanitized.length >= 3 && /^\d+$/.test(trimmedQuery.replace(/\D/g, ''))
       ? sanitized

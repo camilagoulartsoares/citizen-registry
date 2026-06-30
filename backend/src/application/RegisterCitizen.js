@@ -25,9 +25,6 @@ class InvalidNameError extends Error {
   }
 }
 
-/**
- * Caso de uso: cadastrar um novo cidadão.
- */
 class RegisterCitizen {
   constructor(citizenRepository) {
     this.citizenRepository = citizenRepository

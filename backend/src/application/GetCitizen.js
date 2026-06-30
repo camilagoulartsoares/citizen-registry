@@ -8,9 +8,6 @@ class CitizenNotFoundError extends Error {
   }
 }
 
-/**
- * Caso de uso: obter cidadão por ID.
- */
 class GetCitizen {
   constructor(citizenRepository) {
     this.citizenRepository = citizenRepository

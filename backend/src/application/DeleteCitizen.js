@@ -1,8 +1,5 @@
 const { CitizenNotFoundError } = require('./GetCitizen')
 
-/**
- * Caso de uso: remover cidadão.
- */
 class DeleteCitizen {
   constructor(citizenRepository) {
     this.citizenRepository = citizenRepository

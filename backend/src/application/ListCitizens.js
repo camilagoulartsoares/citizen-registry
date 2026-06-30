@@ -1,6 +1,3 @@
-/**
- * Caso de uso: listar cidadãos com paginação e filtro opcional.
- */
 class ListCitizens {
   constructor(citizenRepository) {
     this.citizenRepository = citizenRepository

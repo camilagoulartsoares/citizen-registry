@@ -23,6 +23,17 @@ describe('Citizens HTTP API', () => {
     })
   })
 
+  describe('GET /api-docs.json', () => {
+    it('expõe especificação OpenAPI', async () => {
+      const response = await request(app).get('/api-docs.json')
+
+      expect(response.status).toBe(200)
+      expect(response.body.openapi).toBe('3.0.0')
+      expect(response.body.paths['/citizens']).toBeDefined()
+      expect(response.body.paths['/citizens/export']).toBeDefined()
+    })
+  })
+
   describe('POST /citizens', () => {
     it('cadastra cidadão com dados válidos', async () => {
       const response = await request(app)

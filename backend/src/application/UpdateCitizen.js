@@ -7,9 +7,6 @@ const {
   InvalidNameError,
 } = require('./RegisterCitizen')
 
-/**
- * Caso de uso: atualizar dados de um cidadão.
- */
 class UpdateCitizen {
   constructor(citizenRepository) {
     this.citizenRepository = citizenRepository

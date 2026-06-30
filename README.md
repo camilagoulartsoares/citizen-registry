@@ -6,9 +6,9 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 
 | Camada | Tecnologias |
 |--------|-------------|
-| **Backend** | Node.js, Express 4, better-sqlite3, CORS |
+| **Backend** | Node.js, Express 4, better-sqlite3, CORS, Swagger (OpenAPI), express-rate-limit |
 | **Frontend** | Vue 3 (Composition API), Vuetify 3, Vue Router 4, Vite 6, Axios |
-| **Testes** | Jest 29 + supertest (backend) |
+| **Testes** | Jest 29 + supertest (backend), Vitest + Vue Test Utils (frontend) |
 | **Infraestrutura** | Docker, docker-compose |
 | **Dev** | concurrently (sobe back + front juntos) |
 
@@ -58,6 +58,7 @@ npm run dev
 - Backend: http://localhost:3000
 - Frontend: http://localhost:5173
 - Health check: `curl http://localhost:3000/health` → `{"status":"ok"}`
+- **Swagger UI:** http://localhost:3000/api-docs
 
 ### Separado
 
@@ -78,14 +79,6 @@ docker-compose up
 Acesse: http://localhost:5173
 
 ### Testes automatizados (backend)
-
-Na raiz do projeto:
-
-```bash
-npm test
-```
-
-Ou dentro da pasta `backend`:
 
 ```bash
 cd backend
@@ -122,6 +115,37 @@ npm test -- -t "cadastra cidadão"
 
 Os testes **não precisam** do servidor rodando nem do banco em disco — usam SQLite `:memory:` e o app Express montado em memória.
 
+### Testes automatizados (frontend — Vitest)
+
+Na raiz (roda backend + frontend):
+
+```bash
+npm test
+```
+
+Só o frontend:
+
+```bash
+cd frontend
+npm install
+npm test
+```
+
+**Modo watch (re-executa ao salvar):**
+
+```bash
+cd frontend
+npm run test:watch
+```
+
+**Arquivos de teste:**
+
+| Arquivo | O que testa |
+|---------|-------------|
+| `src/composables/useCpfMask.test.js` | `unmask`, `mask`, `isValid` |
+| `src/components/CitizenForm.test.js` | Erro quando nome tem menos de 3 caracteres |
+| `src/composables/useCitizen.test.js` | Tratamento de CPF duplicado (API mockada) |
+
 ### Build de produção (frontend)
 
 ```bash
@@ -149,13 +173,96 @@ Backend:  GET http://localhost:3000/citizens?page=1&limit=10
 3. Acesse **Lista de cidadãos** para ver a tabela paginada
 4. Clique em **Baixar CSV** na home ou na lista para exportar os dados
 
+4. Clique em **Baixar CSV** na home ou na lista para exportar os dados
+5. Abra **http://localhost:3000/api-docs** para explorar e testar a API pelo Swagger
+
+## Funcionalidades implementadas
+
+### Backend
+
+| Funcionalidade | Detalhes |
+|----------------|----------|
+| **CRUD de cidadãos** | Cadastrar, listar, buscar, editar e remover por ID |
+| **Validação de CPF** | Dígitos verificadores + rejeição de sequências repetidas |
+| **Listagem paginada** | `page`, `limit` (máx. 100) e `query` no banco (`LIMIT`/`OFFSET`) |
+| **Busca simples** | `GET /citizens?query=` retorna até 10 resultados |
+| **Exportação CSV** | `GET /citizens/export` — colunas Nome, CPF, Data de cadastro (UTF-8 + BOM) |
+| **Swagger / OpenAPI 3.0** | Documentação interativa em `/api-docs` (swagger-jsdoc + swagger-ui-express) |
+| **Rate limiting** | 100 req/IP a cada 15 min (express-rate-limit), desligado em testes |
+| **Clean Architecture** | Domain → Application → Infrastructure → HTTP |
+| **Testes** | 46 testes Jest (unitários, repositório `:memory:`, integração supertest) |
+
+### Frontend
+
+| Funcionalidade | Detalhes |
+|----------------|----------|
+| **Cadastro e consulta** | Formulários com máscara de CPF e validação em tempo real |
+| **Lista paginada** | Tabela com busca (debounce 400ms), visualizar, editar e excluir |
+| **Modais** | Fluxo de atenção → confirmação → sucesso na exclusão; edição e detalhes |
+| **Download CSV** | Atalho na home e botão na lista (respeita filtro de busca) |
+| **Dark mode** | Alternância claro/escuro com persistência em `localStorage` |
+| **Snackbar global** | Toasts centralizados para sucesso e erro |
+| **Skeleton loader** | Placeholder na tabela durante carregamento |
+| **Página 404** | Rota catch-all customizada |
+| **Transições** | Fade entre rotas |
+| **Favicon e título** | Ícone SVG e título dinâmico por página |
+| **Testes** | 13 testes Vitest (`useCpfMask`, `CitizenForm`, `useCitizen`) |
+
 ## API
+
+### Documentação Swagger (OpenAPI)
+
+A API é documentada com **OpenAPI 3.0** gerada via **swagger-jsdoc** e servida com **swagger-ui-express**.
+
+| Recurso | URL |
+|---------|-----|
+| **Swagger UI** (interface interativa) | http://localhost:3000/api-docs |
+| **Especificação JSON** | http://localhost:3000/api-docs.json |
+
+**Arquivo da spec:** `backend/src/http/swagger.js`
+
+#### O que está documentado
+
+| Tag | Endpoints |
+|-----|-----------|
+| **Sistema** | `GET /health` |
+| **Cidadãos** | `GET/POST /citizens`, `GET /citizens/export`, `GET/PUT/DELETE /citizens/{id}` |
+
+Para cada rota o Swagger descreve:
+
+- Parâmetros de query, path e body
+- Schemas `Citizen`, `CitizenInput`, `PaginatedCitizens`, `Error`
+- Respostas por status HTTP (200, 201, 204, 400, 404, 409)
+- Exemplos de CPF e nomes válidos
+
+#### Como usar o Swagger UI
+
+1. Suba o backend: `npm run dev` (raiz) ou `cd backend && npm run dev`
+2. Acesse http://localhost:3000/api-docs
+3. Expanda um endpoint (ex.: `POST /citizens`)
+4. Clique em **Try it out**
+5. Preencha o JSON de exemplo e execute **Execute**
+6. Veja status, headers e corpo da resposta na mesma tela
+
+#### Exemplo via curl (equivalente ao Swagger)
+
+```bash
+# Cadastrar — mesmo body do schema CitizenInput no Swagger
+curl -X POST http://localhost:3000/citizens \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Maria Silva","cpf":"529.982.247-25"}'
+
+# Baixar spec OpenAPI
+curl http://localhost:3000/api-docs.json
+```
 
 ### Endpoints
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | `GET` | `/health` | Health check |
+| `GET` | `/api-docs` | Documentação Swagger UI |
+| `GET` | `/api-docs.json` | Especificação OpenAPI 3.0 |
 | `POST` | `/citizens` | Cadastrar cidadão |
 | `GET` | `/citizens?query=` | Busca simples (sem paginação) |
 | `GET` | `/citizens?page=&limit=&query=` | Lista paginada |
@@ -187,6 +294,19 @@ A paginação é feita no backend com `LIMIT` + `OFFSET` — o frontend recebe a
 **Rota:** `GET /citizens/export?query=` (filtro opcional por nome ou CPF)
 
 Retorna arquivo `text/csv` com colunas **Nome**, **CPF** e **Data de cadastro**. O frontend oferece download na home (atalho **Baixar CSV**) e na lista de cidadãos (respeitando o filtro de busca ativo).
+
+### Rate limiting
+
+Proteção básica para produção com **express-rate-limit**:
+
+| Configuração | Valor |
+|--------------|-------|
+| Janela | 15 minutos |
+| Máximo por IP | 100 requisições |
+| Resposta ao exceder | `429` + `{ "message": "Muitas requisições..." }` |
+| Em testes | Desabilitado (`NODE_ENV=test`) |
+
+**Arquivo:** `backend/src/http/middlewares/rateLimit.js`
 
 ### Erros da API
 
@@ -247,7 +367,6 @@ Infrastructure (SQLiteRepository — implementa a interface)
 `SQLiteRepository.js`:
 
 - Cria tabela `citizens` automaticamente
-- Migração leve com `ensureColumn` para novas colunas
 - Índices em `cpf` e `name`
 - Paginação real no banco (`LIMIT` + `OFFSET` + `COUNT(*)`)
 - Busca por nome (`LIKE`) ou CPF sanitizado
@@ -267,10 +386,13 @@ CREATE TABLE citizens (
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `server.js` | Bootstrap Express, CORS, rotas, health check |
+| `server.js` | Bootstrap Express e listen na porta 3000 |
+| `createApp.js` | Factory do app (CORS, rate limit, Swagger, rotas, erros) |
 | `routes.js` | Definição das rotas REST |
 | `citizenController.js` | Orquestra os casos de uso |
-| `middlewares/cors.js` | CORS para o frontend |
+| `swagger.js` | Especificação OpenAPI 3.0 completa (swagger-jsdoc) |
+| `middlewares/rateLimit.js` | Limite de 100 req/IP por 15 min |
+| `middlewares/cors.js` | CORS (GET, POST, PUT, DELETE) |
 | `middlewares/errorHandler.js` | Mapeia erros de aplicação para HTTP |
 
 ### Frontend
@@ -370,22 +492,23 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 
 ## Testes
 
-**Frameworks:** Jest 29 + supertest (backend)
+**Frameworks:** Jest 29 + supertest (backend) · Vitest + `@vue/test-utils` + jsdom (frontend)
 
 ### Como executar
 
 | Comando | O que faz |
 |---------|-----------|
-| `npm test` (na raiz) | Roda todos os 45 testes do backend |
-| `cd backend && npm test` | Mesmo resultado, a partir da pasta backend |
-| `cd backend && npm run test:coverage` | Testes + relatório de cobertura em `backend/coverage/` |
-| `npm test -- tests/http/citizens.routes.test.js` | Só testes de integração HTTP |
-| `npm test -- tests/SQLiteRepository.test.js` | Só testes do repositório |
+| `npm test` (na raiz) | Roda **59 testes** (46 backend + 13 frontend) |
+| `cd backend && npm test` | Só backend (46 testes) |
+| `cd frontend && npm test` | Só frontend (13 testes) |
+| `cd backend && npm run test:coverage` | Cobertura em `backend/coverage/` |
+| `cd frontend && npm run test:watch` | Vitest em modo watch |
+| `npm test -- tests/http/citizens.routes.test.js` | Só integração HTTP |
 | `npm test -- -t "nome do teste"` | Filtra por descrição (`it(...)`) |
 
-**Pré-requisito:** dependências instaladas (`npm install` na raiz + `npm run install:all`, ou `npm install` em `backend/`).
+**Pré-requisito:** `npm install` na raiz + `npm run install:all` (ou `npm install` em `backend/` e `frontend/`).
 
-### Tipos de teste
+### Tipos de teste (backend)
 
 | Tipo | Arquivo(s) | Estratégia |
 |------|------------|------------|
@@ -431,11 +554,23 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 ### `tests/http/citizens.routes.test.js`
 
 - Integração HTTP com **supertest** e app Express real
-- `GET /health`, `POST /citizens`, `GET /citizens`, `GET /citizens/:id`
+- `GET /health`, `GET /api-docs.json`, `POST /citizens`, `GET /citizens`, `GET /citizens/:id`
 - `PUT /citizens/:id`, `DELETE /citizens/:id`, `GET /citizens/export`
 - Valida status HTTP e corpo das respostas de ponta a ponta
 
-**Total: 45 testes.** Casos de uso isolados usam mocks; repositório e rotas usam SQLite em memória.
+**Total: 46 testes (backend).**
+
+### Testes do frontend (Vitest)
+
+**Frameworks:** Vitest + `@vue/test-utils` + jsdom
+
+| Arquivo | Cobertura |
+|---------|-----------|
+| `useCpfMask.test.js` | `unmask`, `mask`, `isValid` |
+| `CitizenForm.test.js` | Validação visual de nome curto e botão desabilitado |
+| `useCitizen.test.js` | `resolveApiError` e `createCitizen` com CPF duplicado (API mockada) |
+
+**Total: 13 testes (frontend).** `npm test` na raiz = **59 testes** no total.
 
 ### Teste manual da API (com servidor rodando)
 
@@ -469,6 +604,12 @@ curl -X DELETE http://localhost:3000/citizens/1
 
 # Exportar CSV
 curl -O -J "http://localhost:3000/citizens/export"
+
+# Abrir documentação Swagger (navegador)
+# http://localhost:3000/api-docs
+
+# Spec OpenAPI em JSON
+curl http://localhost:3000/api-docs.json
 ```
 
 **Erros esperados (úteis para validar):**
@@ -500,6 +641,7 @@ curl http://localhost:3000/citizens/999
 | Paginação no backend | Escalabilidade; frontend não carrega todos os registros |
 | Composables Vue | Lógica reutilizável sem poluir templates |
 | Proxy Vite em dev | Evita problemas de CORS |
+| Swagger + rate limit | Documentação profissional e proteção básica em produção |
 | Vuetify 3 | Componentes prontos + Material Design Icons |
 
 ## Fluxo da aplicação
@@ -526,7 +668,5 @@ flowchart TB
 
 - Autenticação JWT e controle de acesso por perfil
 - Testes E2E com Playwright
-- Testes unitários no frontend (Vitest)
 - CI/CD com GitHub Actions
 - Paginação por cursor para grandes volumes
-- Swagger/OpenAPI para documentação da API
