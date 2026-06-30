@@ -15,7 +15,7 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 | **OpenAPI JSON** | https://citizen-registry-system-backend.onrender.com/api-docs.json |
 | **Health check** | https://citizen-registry-system-backend.onrender.com/health |
 
-![Interface — Cadastro CPF](docs/images/app-demo.jpg)
+![Interface — Cadastro CPF](docs/images/app-demo.gif)
 
 > A raiz do backend (`/`) redireciona automaticamente para o **Swagger**.  
 > No plano free do Render, a primeira requisição após inatividade pode levar ~50s.
@@ -99,6 +99,7 @@ citizen-registry-system/
 │
 ├── docs/
 │   └── images/
+│       ├── app-demo.jpg            # Print da interface (home)
 │       └── swagger-ui.png          # Print da documentação Swagger
 │
 ├── backend/                        # API REST — Node.js + Express
