@@ -10,6 +10,8 @@ Sistema web para **cadastro e consulta de cidadãos brasileiros por CPF**. Desen
 
 ![Demonstração do sistema](./docs/demo.gif)
 
+
+
 O GIF apresenta o fluxo principal da aplicação:
 
 - Cadastro de cidadão com validação em tempo real
