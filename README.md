@@ -1,6 +1,55 @@
 # Cadastro CPF
 
-Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com validação de dígitos verificadores, persistência em SQLite e interface administrativa inspirada em sistemas municipais (identidade visual GESUAS).
+Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com validação de dígitos verificadores, persistência em SQLite, **documentação Swagger/OpenAPI** e interface administrativa inspirada em sistemas municipais (identidade visual GESUAS).
+
+---
+
+## Destaques do projeto
+
+| | |
+|---|---|
+| **Swagger UI** | Documentação interativa da API em `/api-docs` — teste endpoints pelo navegador |
+| **Clean Architecture** | Backend em camadas: Domain → Application → Infrastructure → HTTP |
+| **59 testes** | 46 Jest (backend) + 13 Vitest (frontend) |
+| **CRUD completo** | Cadastrar, listar, buscar, editar, remover cidadãos |
+| **Exportação CSV** | `GET /citizens/export` + download na interface |
+| **Rate limiting** | Proteção básica para produção (100 req/IP / 15 min) |
+| **UX moderna** | Dark mode, snackbar global, skeleton loader, página 404 |
+
+### Links rápidos (com o projeto rodando)
+
+| Recurso | URL |
+|---------|-----|
+| **Swagger UI** | http://localhost:3000/api-docs |
+| **OpenAPI JSON** | http://localhost:3000/api-docs.json |
+| **Frontend** | http://localhost:5173 |
+| **Health check** | http://localhost:3000/health |
+
+---
+
+## Documentação Swagger (OpenAPI 3.0)
+
+A API possui **documentação profissional e interativa** gerada com **swagger-jsdoc** e servida com **swagger-ui-express**. Todos os endpoints podem ser testados direto no navegador com **Try it out**.
+
+![Swagger UI — Cadastro CPF API](docs/images/swagger-ui.png)
+
+| Item | Detalhe |
+|------|---------|
+| **Título** | Cadastro CPF API v1.0.0 |
+| **Especificação** | OpenAPI 3.0 (OAS 3.0) |
+| **Servidor** | `http://localhost:3000` |
+| **Arquivo fonte** | `backend/src/http/swagger.js` |
+| **Tag Sistema** | `GET /health` |
+| **Tag Cidadãos** | CRUD + `GET /citizens/export` (CSV) |
+| **Schemas** | `Citizen`, `CitizenInput`, `PaginatedCitizens`, `Error` |
+
+```bash
+# Subir o backend e abrir o Swagger
+cd backend && npm run dev
+# Acesse: http://localhost:3000/api-docs
+```
+
+---
 
 ## Tecnologias
 
@@ -14,34 +63,92 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 
 ## Estrutura do projeto
 
+Arquitetura **monorepo** com backend (Clean Architecture) e frontend (Vue 3):
+
 ```
 citizen-registry-system/
-├── backend/
+│
+├── docs/
+│   └── images/
+│       └── swagger-ui.png          # Print da documentação Swagger
+│
+├── backend/                        # API REST — Node.js + Express
 │   ├── src/
-│   │   ├── domain/           # Entidades e regras de negócio puras
-│   │   ├── application/      # Casos de uso
-│   │   ├── infrastructure/   # SQLite, repositório concreto
-│   │   └── http/             # Controllers, rotas, middlewares
-│   ├── tests/                # Testes Jest
-│   ├── data/                 # Banco SQLite (gerado em runtime)
+│   │   ├── domain/                 # Regras de negócio puras (sem Express/SQLite)
+│   │   │   ├── Citizen.js          # Entidade cidadão
+│   │   │   ├── CpfValidator.js     # Validação de CPF
+│   │   │   └── CitizenRepository.js# Contrato do repositório
+│   │   │
+│   │   ├── application/            # Casos de uso (uma classe por operação)
+│   │   │   ├── RegisterCitizen.js
+│   │   │   ├── FindCitizen.js
+│   │   │   ├── ListCitizens.js
+│   │   │   ├── GetCitizen.js
+│   │   │   ├── UpdateCitizen.js
+│   │   │   ├── DeleteCitizen.js
+│   │   │   └── ExportCitizens.js   # Exportação CSV
+│   │   │
+│   │   ├── infrastructure/         # Persistência e utilitários
+│   │   │   ├── SQLiteRepository.js # Implementação SQLite
+│   │   │   └── csvExport.js        # Geração do arquivo CSV
+│   │   │
+│   │   └── http/                   # Camada HTTP
+│   │       ├── createApp.js        # Factory Express (CORS, rate limit, Swagger)
+│   │       ├── swagger.js          # Especificação OpenAPI 3.0
+│   │       ├── routes.js           # Rotas REST
+│   │       ├── citizenController.js
+│   │       └── middlewares/
+│   │           ├── cors.js
+│   │           ├── rateLimit.js    # express-rate-limit
+│   │           └── errorHandler.js
+│   │
+│   ├── tests/                      # 46 testes Jest
+│   │   ├── http/                   # Integração supertest
+│   │   ├── helpers/                # App de teste + fixtures
+│   │   ├── CpfValidator.test.js
+│   │   ├── RegisterCitizen.test.js
+│   │   ├── UpdateCitizen.test.js
+│   │   ├── DeleteCitizen.test.js
+│   │   └── SQLiteRepository.test.js
+│   │
+│   ├── data/                       # SQLite gerado em runtime
 │   ├── server.js
-│   ├── Dockerfile
 │   └── package.json
-├── frontend/
+│
+├── frontend/                       # Interface — Vue 3 + Vuetify 3
 │   ├── src/
-│   │   ├── views/            # Páginas
-│   │   ├── components/       # Componentes reutilizáveis
-│   │   ├── composables/      # Lógica compartilhada
-│   │   ├── services/         # Cliente HTTP (Axios)
-│   │   ├── router/           # Rotas Vue
-│   │   └── assets/styles/    # CSS global e design tokens
-│   ├── vite.config.js
-│   ├── Dockerfile
+│   │   ├── views/                  # Home, Cadastrar, Consultar, Lista, 404
+│   │   ├── components/             # Tabela, modais, formulários, snackbar
+│   │   ├── composables/            # useCitizen, useCpfMask, useSnackbar, useAppTheme
+│   │   ├── services/api.js         # Cliente Axios (/api → proxy Vite)
+│   │   ├── router/index.js
+│   │   ├── test/setup.js           # Setup Vitest + Vuetify
+│   │   └── assets/styles/main.css  # Design tokens GESUAS
+│   ├── public/favicon.svg
 │   └── package.json
+│
 ├── docker-compose.yml
-├── package.json              # Scripts da raiz (dev, install:all, test)
+├── package.json                    # npm run dev | test | install:all
 └── README.md
 ```
+
+### Fluxo das camadas (backend)
+
+```
+Requisição HTTP
+      ↓
+createApp.js  →  rateLimit  →  Swagger (/api-docs)  →  routes.js
+      ↓
+citizenController.js
+      ↓
+Casos de uso (application/)
+      ↓
+Domain (validações)  +  SQLiteRepository (infrastructure/)
+      ↓
+SQLite (data/citizens.sqlite)
+```
+
+---
 
 ## Como rodar
 
@@ -172,8 +279,6 @@ Backend:  GET http://localhost:3000/citizens?page=1&limit=10
 2. Use a busca com o nome ou CPF cadastrado
 3. Acesse **Lista de cidadãos** para ver a tabela paginada
 4. Clique em **Baixar CSV** na home ou na lista para exportar os dados
-
-4. Clique em **Baixar CSV** na home ou na lista para exportar os dados
 5. Abra **http://localhost:3000/api-docs** para explorar e testar a API pelo Swagger
 
 ## Funcionalidades implementadas
@@ -208,9 +313,11 @@ Backend:  GET http://localhost:3000/citizens?page=1&limit=10
 | **Favicon e título** | Ícone SVG e título dinâmico por página |
 | **Testes** | 13 testes Vitest (`useCpfMask`, `CitizenForm`, `useCitizen`) |
 
-## API
+## API REST
 
-### Documentação Swagger (OpenAPI)
+> Documentação completa e interativa: **http://localhost:3000/api-docs**
+
+### Documentação Swagger (detalhes)
 
 A API é documentada com **OpenAPI 3.0** gerada via **swagger-jsdoc** e servida com **swagger-ui-express**.
 
