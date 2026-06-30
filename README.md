@@ -8,7 +8,7 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 |--------|-------------|
 | **Backend** | Node.js, Express 4, better-sqlite3, CORS |
 | **Frontend** | Vue 3 (Composition API), Vuetify 3, Vue Router 4, Vite 6, Axios |
-| **Testes** | Jest 29 (backend) |
+| **Testes** | Jest 29 + supertest (backend) |
 | **Infraestrutura** | Docker, docker-compose |
 | **Dev** | concurrently (sobe back + front juntos) |
 
@@ -77,13 +77,50 @@ docker-compose up
 
 Acesse: http://localhost:5173
 
-### Testes
+### Testes automatizados (backend)
+
+Na raiz do projeto:
+
+```bash
+npm test
+```
+
+Ou dentro da pasta `backend`:
 
 ```bash
 cd backend
+npm install
 npm test
+```
+
+**Com relatório de cobertura:**
+
+```bash
+cd backend
 npm run test:coverage
 ```
+
+**Rodar um arquivo ou suite específica:**
+
+```bash
+cd backend
+
+# só integração HTTP (supertest)
+npm test -- tests/http/citizens.routes.test.js
+
+# só repositório SQLite em memória
+npm test -- tests/SQLiteRepository.test.js
+
+# só casos de uso
+npm test -- tests/RegisterCitizen.test.js
+npm test -- tests/UpdateCitizen.test.js
+npm test -- tests/DeleteCitizen.test.js
+
+# filtrar por nome do teste
+npm test -- -t "cadastra cidadão"
+```
+
+Os testes **não precisam** do servidor rodando nem do banco em disco — usam SQLite `:memory:` e o app Express montado em memória.
 
 ### Build de produção (frontend)
 
@@ -333,7 +370,29 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 
 ## Testes
 
-**Framework:** Jest (backend)
+**Frameworks:** Jest 29 + supertest (backend)
+
+### Como executar
+
+| Comando | O que faz |
+|---------|-----------|
+| `npm test` (na raiz) | Roda todos os 45 testes do backend |
+| `cd backend && npm test` | Mesmo resultado, a partir da pasta backend |
+| `cd backend && npm run test:coverage` | Testes + relatório de cobertura em `backend/coverage/` |
+| `npm test -- tests/http/citizens.routes.test.js` | Só testes de integração HTTP |
+| `npm test -- tests/SQLiteRepository.test.js` | Só testes do repositório |
+| `npm test -- -t "nome do teste"` | Filtra por descrição (`it(...)`) |
+
+**Pré-requisito:** dependências instaladas (`npm install` na raiz + `npm run install:all`, ou `npm install` em `backend/`).
+
+### Tipos de teste
+
+| Tipo | Arquivo(s) | Estratégia |
+|------|------------|------------|
+| **Domínio** | `CpfValidator.test.js` | Validação de CPF isolada |
+| **Casos de uso** | `RegisterCitizen`, `UpdateCitizen`, `DeleteCitizen` | Mocks do repositório |
+| **Repositório** | `SQLiteRepository.test.js` | SQLite real em `:memory:` |
+| **Integração HTTP** | `http/citizens.routes.test.js` | supertest + Express + SQLite `:memory:` |
 
 ### `tests/CpfValidator.test.js`
 
@@ -350,7 +409,84 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 - Rejeita CPF inválido
 - Rejeita CPF duplicado
 
-**Total: 9 testes.** Usam mocks do repositório para validar a lógica dos casos de uso de forma isolada.
+### `tests/UpdateCitizen.test.js`
+
+- Atualiza cidadão com dados válidos
+- Rejeita cidadão inexistente, nome inválido e CPF inválido
+- Rejeita CPF duplicado de outro cidadão
+- Permite manter o mesmo CPF do próprio registro
+
+### `tests/DeleteCitizen.test.js`
+
+- Remove cidadão existente
+- Rejeita cidadão inexistente
+
+### `tests/SQLiteRepository.test.js`
+
+- Banco em memória (`:memory:`) — sem dependência de arquivo em disco
+- `create`, `findById`, `findByCpf`, `findByQuery`
+- `findAll` com paginação e filtro
+- `findAllForExport`, `update`, `delete`
+
+### `tests/http/citizens.routes.test.js`
+
+- Integração HTTP com **supertest** e app Express real
+- `GET /health`, `POST /citizens`, `GET /citizens`, `GET /citizens/:id`
+- `PUT /citizens/:id`, `DELETE /citizens/:id`, `GET /citizens/export`
+- Valida status HTTP e corpo das respostas de ponta a ponta
+
+**Total: 45 testes.** Casos de uso isolados usam mocks; repositório e rotas usam SQLite em memória.
+
+### Teste manual da API (com servidor rodando)
+
+Com o backend no ar (`npm run dev` na raiz ou `cd backend && npm run dev`):
+
+```bash
+# Health check
+curl http://localhost:3000/health
+
+# Cadastrar cidadão (CPF válido de exemplo)
+curl -X POST http://localhost:3000/citizens \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Maria Silva","cpf":"529.982.247-25"}'
+
+# Listar com paginação
+curl "http://localhost:3000/citizens?page=1&limit=10"
+
+# Busca simples por nome
+curl "http://localhost:3000/citizens?query=Maria"
+
+# Buscar por ID (substitua 1 pelo id retornado no cadastro)
+curl http://localhost:3000/citizens/1
+
+# Atualizar
+curl -X PUT http://localhost:3000/citizens/1 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Maria Santos","cpf":"529.982.247-25"}'
+
+# Remover
+curl -X DELETE http://localhost:3000/citizens/1
+
+# Exportar CSV
+curl -O -J "http://localhost:3000/citizens/export"
+```
+
+**Erros esperados (úteis para validar):**
+
+```bash
+# 400 — nome curto
+curl -X POST http://localhost:3000/citizens \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ab","cpf":"529.982.247-25"}'
+
+# 400 — CPF inválido
+curl -X POST http://localhost:3000/citizens \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Maria Silva","cpf":"111.111.111-11"}'
+
+# 404 — ID inexistente
+curl http://localhost:3000/citizens/999
+```
 
 ## Decisões técnicas
 
@@ -389,7 +525,6 @@ flowchart TB
 ## O que eu adicionaria com mais tempo
 
 - Autenticação JWT e controle de acesso por perfil
-- Testes de integração HTTP (supertest)
 - Testes E2E com Playwright
 - Testes unitários no frontend (Vitest)
 - CI/CD com GitHub Actions
