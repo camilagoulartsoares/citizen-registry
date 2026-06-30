@@ -6,15 +6,18 @@ const {
 } = require('../application/RegisterCitizen')
 const FindCitizen = require('../application/FindCitizen')
 const ListCitizens = require('../application/ListCitizens')
+const { GetCitizen } = require('../application/GetCitizen')
+const UpdateCitizen = require('../application/UpdateCitizen')
+const DeleteCitizen = require('../application/DeleteCitizen')
+const { ConfirmPayment, PaymentAlreadyConfirmedError } = require('../application/ConfirmPayment')
+const { CitizenNotFoundError } = require('../application/GetCitizen')
 
 /**
  * Controller HTTP para operações com cidadãos.
  */
 class CitizenController {
-  constructor({ registerCitizen, findCitizen, listCitizens }) {
-    this.registerCitizen = registerCitizen
-    this.findCitizen = findCitizen
-    this.listCitizens = listCitizens
+  constructor(useCases) {
+    Object.assign(this, useCases)
   }
 
   async create(req, res, next) {
@@ -31,7 +34,6 @@ class CitizenController {
     try {
       const { query, page, limit } = req.query
 
-      // Modo busca: apenas query sem paginação explícita
       if (query && !page && !limit) {
         const citizens = await this.findCitizen.execute(query)
         return res.json(citizens.map((c) => c.toJSON()))
@@ -49,6 +51,42 @@ class CitizenController {
       next(error)
     }
   }
+
+  async getById(req, res, next) {
+    try {
+      const citizen = await this.getCitizen.execute(Number(req.params.id))
+      res.json(citizen.toJSON())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async update(req, res, next) {
+    try {
+      const citizen = await this.updateCitizen.execute(Number(req.params.id), req.body)
+      res.json(citizen.toJSON())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async remove(req, res, next) {
+    try {
+      await this.deleteCitizen.execute(Number(req.params.id))
+      res.status(204).send()
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async confirmPayment(req, res, next) {
+    try {
+      const citizen = await this.confirmPayment.execute(Number(req.params.id))
+      res.json(citizen.toJSON())
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
 function createCitizenController(repository) {
@@ -56,6 +94,10 @@ function createCitizenController(repository) {
     registerCitizen: new RegisterCitizen(repository),
     findCitizen: new FindCitizen(repository),
     listCitizens: new ListCitizens(repository),
+    getCitizen: new GetCitizen(repository),
+    updateCitizen: new UpdateCitizen(repository),
+    deleteCitizen: new DeleteCitizen(repository),
+    confirmPayment: new ConfirmPayment(repository),
   })
 }
 
@@ -65,4 +107,6 @@ module.exports = {
   DuplicateCpfError,
   InvalidCpfError,
   InvalidNameError,
+  CitizenNotFoundError,
+  PaymentAlreadyConfirmedError,
 }

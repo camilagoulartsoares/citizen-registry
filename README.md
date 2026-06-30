@@ -1,23 +1,49 @@
 # Cadastro CPF
 
-Sistema de cadastro e consulta de cidadãos brasileiros por CPF.
+Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com validação de dígitos verificadores, persistência em SQLite e interface administrativa inspirada em sistemas municipais (identidade visual GESUAS).
 
 ## Tecnologias
 
-- **Backend**: Node.js + Express + SQLite
-- **Frontend**: Vue 3 + Vuetify 3 + Vite
-- **Testes**: Jest (backend)
-- **Infraestrutura**: Docker
+| Camada | Tecnologias |
+|--------|-------------|
+| **Backend** | Node.js, Express 4, better-sqlite3, CORS |
+| **Frontend** | Vue 3 (Composition API), Vuetify 3, Vue Router 4, Vite 6, Axios |
+| **Testes** | Jest 29 (backend) |
+| **Infraestrutura** | Docker, docker-compose |
+| **Dev** | concurrently (sobe back + front juntos) |
 
-## Como rodar com Docker
+## Estrutura do projeto
 
-```bash
-docker-compose up
+```
+citizen-registry-system/
+├── backend/
+│   ├── src/
+│   │   ├── domain/           # Entidades e regras de negócio puras
+│   │   ├── application/      # Casos de uso
+│   │   ├── infrastructure/   # SQLite, repositório concreto
+│   │   └── http/             # Controllers, rotas, middlewares
+│   ├── tests/                # Testes Jest
+│   ├── data/                 # Banco SQLite (gerado em runtime)
+│   ├── server.js
+│   ├── Dockerfile
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── views/            # Páginas
+│   │   ├── components/       # Componentes reutilizáveis
+│   │   ├── composables/      # Lógica compartilhada
+│   │   ├── services/         # Cliente HTTP (Axios)
+│   │   ├── router/           # Rotas Vue
+│   │   └── assets/styles/    # CSS global e design tokens
+│   ├── vite.config.js
+│   ├── Dockerfile
+│   └── package.json
+├── docker-compose.yml
+├── package.json              # Scripts da raiz (dev, install:all, test)
+└── README.md
 ```
 
-Acesse: http://localhost:5173
-
-## Como rodar sem Docker
+## Como rodar
 
 ### Opção rápida (backend + frontend juntos)
 
@@ -30,24 +56,39 @@ npm run dev
 ```
 
 - Backend: http://localhost:3000
-- Frontend: http://localhost:5173 (ou próxima porta livre)
+- Frontend: http://localhost:5173
+- Health check: `curl http://localhost:3000/health` → `{"status":"ok"}`
 
 ### Separado
 
-#### Backend
+```bash
+# Terminal 1
+cd backend && npm install && npm run dev
+
+# Terminal 2
+cd frontend && npm install && npm run dev
+```
+
+### Com Docker
+
+```bash
+docker-compose up
+```
+
+Acesse: http://localhost:5173
+
+### Testes
 
 ```bash
 cd backend
-npm install
-npm run dev
+npm test
+npm run test:coverage
 ```
 
-#### Frontend
+### Build de produção (frontend)
 
 ```bash
-cd frontend
-npm install
-npm run dev
+cd frontend && npm run build
 ```
 
 ## Integração Frontend ↔ Backend
@@ -58,54 +99,279 @@ O frontend se comunica com o backend via proxy do Vite em desenvolvimento:
 - O Vite redireciona para `http://localhost:3000/*`
 - Configuração em `frontend/.env.development`
 
-Para testar manualmente:
+```
+Frontend: GET /api/citizens?page=1&limit=10
+    ↓ proxy (vite.config.js)
+Backend:  GET http://localhost:3000/citizens?page=1&limit=10
+```
 
-1. Cadastre um cidadão na home com CPF válido (ex: `529.982.247-25`)
+### Teste manual
+
+1. Cadastre um cidadão com CPF válido (ex: `529.982.247-25`)
 2. Use a busca com o nome ou CPF cadastrado
-3. Acesse **Lista de Cidadãos** para ver a tabela paginada
+3. Acesse **Lista de cidadãos** para ver a tabela paginada
 
-Verifique se o backend está ativo:
+## API
 
-```bash
-curl http://localhost:3000/health
-# {"status":"ok"}
+### Endpoints
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/health` | Health check |
+| `POST` | `/citizens` | Cadastrar cidadão |
+| `GET` | `/citizens?query=` | Busca simples (sem paginação) |
+| `GET` | `/citizens?page=&limit=&query=` | Lista paginada |
+| `GET` | `/citizens/:id` | Visualizar por ID |
+| `PUT` | `/citizens/:id` | Editar cidadão |
+| `DELETE` | `/citizens/:id` | Remover cidadão (204) |
+| `POST` | `/citizens/:id/payment` | Confirmar pagamento |
+
+### Listagem paginada
+
+**Parâmetros:** `page` (padrão: 1), `limit` (padrão: 10, máx: 100), `query` (busca por nome ou CPF)
+
+**Resposta:**
+
+```json
+{
+  "data": [],
+  "total": 42,
+  "page": 1,
+  "limit": 10,
+  "totalPages": 5
+}
 ```
 
-## Como rodar os testes
+A paginação é feita no backend com `LIMIT` + `OFFSET` — o frontend recebe apenas os registros da página atual.
 
-```bash
-cd backend
-npm test
-npm run test:coverage
-```
+### Erros da API
+
+| Erro | HTTP | Mensagem |
+|------|------|----------|
+| `InvalidNameError` | 400 | Nome deve ter no mínimo 3 caracteres |
+| `InvalidCpfError` | 400 | CPF inválido |
+| `DuplicateCpfError` | 409 | CPF já cadastrado |
+| `CitizenNotFoundError` | 404 | Cidadão não encontrado |
+| `PaymentAlreadyConfirmedError` | 409 | Pagamento já confirmado |
 
 ## Arquitetura
 
-### Backend
+### Backend — Clean Architecture
 
-Arquitetura em camadas seguindo Clean Architecture:
+O backend segue **arquitetura em camadas** com dependências apontando para dentro (domínio no centro):
 
-- **Domain**: entidades e interfaces (`Citizen`, `CpfValidator`)
-- **Application**: casos de uso (`RegisterCitizen`, `FindCitizen`)
-- **Infrastructure**: implementações concretas (`SQLiteRepository`)
-- **Http**: controllers, middlewares e rotas
+```
+HTTP (Controllers, Rotas, Middlewares)
+        ↓
+Application (Casos de uso)
+        ↓
+Domain (Entidades, Validadores, Interfaces)
+        ↑
+Infrastructure (SQLiteRepository — implementa a interface)
+```
+
+**Princípios aplicados:**
+
+- Separação de responsabilidades por camada
+- Repository Pattern: `CitizenRepository` é interface; `SQLiteRepository` é implementação
+- Casos de uso isolados: cada operação é uma classe
+- Domínio sem dependências externas (sem Express, sem SQLite)
+- Injeção de dependência via `createCitizenController(repository)`
+- Prepared statements contra SQL injection
+
+#### Domain
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `Citizen.js` | Entidade com `id`, `name`, `cpf`, `createdAt`, `paymentStatus`, `paidAt` |
+| `CpfValidator.js` | Sanitização e validação por dígitos verificadores da Receita Federal |
+| `CitizenRepository.js` | Interface/contrato do repositório |
+
+#### Application — Casos de uso
+
+| Caso de uso | Arquivo | Descrição |
+|-------------|---------|-----------|
+| RegisterCitizen | `RegisterCitizen.js` | Cadastra cidadão; valida nome, CPF e duplicidade |
+| FindCitizen | `FindCitizen.js` | Busca por nome ou CPF (até 10 resultados) |
+| ListCitizens | `ListCitizens.js` | Lista paginada com filtro opcional |
+| GetCitizen | `GetCitizen.js` | Busca cidadão por ID |
+| UpdateCitizen | `UpdateCitizen.js` | Atualiza nome e CPF |
+| DeleteCitizen | `DeleteCitizen.js` | Remove cidadão por ID |
+| ConfirmPayment | `ConfirmPayment.js` | Confirma pagamento |
+
+#### Infrastructure
+
+`SQLiteRepository.js`:
+
+- Cria tabela `citizens` automaticamente
+- Migração leve com `ensureColumn` para novas colunas
+- Índices em `cpf` e `name`
+- Paginação real no banco (`LIMIT` + `OFFSET` + `COUNT(*)`)
+- Busca por nome (`LIKE`) ou CPF sanitizado
+
+**Schema:**
+
+```sql
+CREATE TABLE citizens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  cpf TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  payment_status TEXT NOT NULL DEFAULT 'pending',
+  paid_at TEXT
+);
+```
+
+#### HTTP
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `server.js` | Bootstrap Express, CORS, rotas, health check |
+| `routes.js` | Definição das rotas REST |
+| `citizenController.js` | Orquestra os casos de uso |
+| `middlewares/cors.js` | CORS para o frontend |
+| `middlewares/errorHandler.js` | Mapeia erros de aplicação para HTTP |
 
 ### Frontend
 
-- Composition API com composables para lógica reutilizável
-- Serviço centralizado de API (axios)
-- Componentes com responsabilidade única
+```
+Views (páginas)
+    ↓
+Components (UI)
+    ↓
+Composables (lógica reutilizável)
+    ↓
+Services/api.js (Axios)
+    ↓
+Backend API (/api → proxy Vite)
+```
+
+**Padrões:** Composition API (`<script setup>`), composables, serviço centralizado de API, componentes com responsabilidade única, Vue Router com meta (título, menu ativo).
+
+#### Rotas
+
+| Rota | View | Descrição |
+|------|------|-----------|
+| `/` | `HomeView` | Página inicial com acesso rápido |
+| `/cadastrar` | `RegisterView` | Formulário de cadastro |
+| `/consultar` | `SearchView` | Busca por nome ou CPF |
+| `/citizens` | `CitizenListView` | Lista de cidadãos com tabela paginada |
+
+#### Telas
+
+**Início** — boas-vindas e cards de acesso rápido.
+
+**Cadastrar cidadão** — formulário com nome e CPF, máscara em tempo real, validação e feedback de erro.
+
+**Consultar CPF** — busca por nome ou CPF, exibe card com dados do cidadão.
+
+**Lista de cidadãos** — abas de navegação, busca com debounce (400ms), botão "+ Novo cidadão", tabela com paginação real no backend, diálogos de visualizar, editar e remover.
+
+#### Componentes
+
+| Componente | Função |
+|------------|--------|
+| `AppSidebar.vue` | Menu lateral fixo (verde degradê), navegação |
+| `AppHeader.vue` | Título e subtítulo da página |
+| `AppPageTabs.vue` | Abas horizontais na lista |
+| `SidebarCityArt.vue` | Ilustração decorativa da prefeitura |
+| `CitizenForm.vue` | Formulário de cadastro |
+| `CitizenEditForm.vue` | Formulário de edição |
+| `CpfSearch.vue` | Campo de busca com máscara |
+| `CitizenCard.vue` | Card de exibição de um cidadão |
+| `CitizenTable.vue` | Tabela com ações (visualizar, editar, remover) |
+| `TablePagination.vue` | Paginação customizada |
+| `QuickAccessGrid.vue` | Grid de atalhos na home |
+
+**Ações da tabela:** ícones em botões quadrados com borda — olho e lápis em cinza (`#6B7280`), lixeira em vermelho (`#DC2626`).
+
+#### Composables
+
+**`useCpfMask.js`** — `unmask`, `mask`, `format`, `looksLikeCpf`, `isValid` (dígitos verificadores).
+
+**`useCitizen.js`** — `loading`, `error`, `createCitizen`, `searchCitizen`, `listCitizens`, `getCitizen`, `updateCitizen`, `deleteCitizen`, `confirmPayment`, `normalizeCitizen` e mensagens de erro em português.
+
+#### Serviço de API (`services/api.js`)
+
+Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métodos: `create`, `search`, `list`, `getById`, `update`, `remove`, `confirmPayment`.
+
+## Identidade visual (GESUAS)
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--color-primary` | `#2E5FA8` | Botões principais, links |
+| `--color-secondary` | `#8DC63F` | Destaques verdes, paginação ativa |
+| `--sidebar-gradient` | `#0B6A3E → #064C2D` | Sidebar |
+| `--sidebar-active` | `#1A9455` | Item de menu ativo |
+| `--color-error` | `#DC2626` | Ações de exclusão |
+
+- Sidebar fixa: 260px, degradê verde escuro
+- Cards com faixa verde lateral (`ui-card`)
+- Tipografia: **Inter**
+- Ícones: **Material Design Icons** (Vuetify)
+
+## Testes
+
+**Framework:** Jest (backend)
+
+### `tests/CpfValidator.test.js`
+
+- Sanitização de CPF formatado
+- Aceita CPF válido (com e sem máscara)
+- Rejeita dígitos verificadores incorretos
+- Rejeita todos os dígitos iguais
+- Rejeita tamanho incorreto
+
+### `tests/RegisterCitizen.test.js`
+
+- Cadastra cidadão com dados válidos
+- Rejeita nome com menos de 3 caracteres
+- Rejeita CPF inválido
+- Rejeita CPF duplicado
+
+**Total: 9 testes.** Usam mocks do repositório para validar a lógica dos casos de uso de forma isolada.
 
 ## Decisões técnicas
 
-- SQLite escolhido para simplicidade de setup (zero configuração)
-- Repository Pattern permite trocar o banco sem afetar use cases
-- CpfValidator isolado e testado independentemente
-- Composables no Vue evitam lógica nos templates
+| Decisão | Motivo |
+|---------|--------|
+| SQLite | Zero configuração, ideal para MVP |
+| Clean Architecture | Testabilidade e troca de banco sem afetar regras de negócio |
+| Repository Pattern | Desacopla persistência dos casos de uso |
+| CpfValidator isolado | Regra crítica testada independentemente |
+| Prepared statements | Segurança contra SQL injection |
+| Paginação no backend | Escalabilidade; frontend não carrega todos os registros |
+| Composables Vue | Lógica reutilizável sem poluir templates |
+| Proxy Vite em dev | Evita problemas de CORS |
+| Vuetify 3 | Componentes prontos + Material Design Icons |
+
+## Fluxo da aplicação
+
+```mermaid
+flowchart TB
+    subgraph Frontend
+        V[Views] --> C[Components]
+        C --> CP[Composables]
+        CP --> API[Axios /api]
+    end
+
+    subgraph Backend
+        API --> R[Routes]
+        R --> CTRL[Controller]
+        CTRL --> UC[Use Cases]
+        UC --> DOM[Domain]
+        UC --> REPO[SQLiteRepository]
+        REPO --> DB[(SQLite)]
+    end
+```
 
 ## O que eu adicionaria com mais tempo
 
-- Autenticação JWT
-- Paginação no backend com cursor
+- Autenticação JWT e controle de acesso por perfil
+- Testes de integração HTTP (supertest)
 - Testes E2E com Playwright
+- Testes unitários no frontend (Vitest)
 - CI/CD com GitHub Actions
+- Paginação por cursor para grandes volumes
+- Exportação CSV/PDF da lista
+- Swagger/OpenAPI para documentação da API

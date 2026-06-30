@@ -7,6 +7,10 @@ class CitizenRepository {
     throw new Error('Method create() must be implemented')
   }
 
+  async findById(_id) {
+    throw new Error('Method findById() must be implemented')
+  }
+
   async findByCpf(_cpf) {
     throw new Error('Method findByCpf() must be implemented')
   }
@@ -17,6 +21,18 @@ class CitizenRepository {
 
   async findAll({ _page, _limit, _query }) {
     throw new Error('Method findAll() must be implemented')
+  }
+
+  async update(_id, _data) {
+    throw new Error('Method update() must be implemented')
+  }
+
+  async delete(_id) {
+    throw new Error('Method delete() must be implemented')
+  }
+
+  async confirmPayment(_id) {
+    throw new Error('Method confirmPayment() must be implemented')
   }
 }
 

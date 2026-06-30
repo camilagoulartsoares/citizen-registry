@@ -8,9 +8,6 @@ const api = axios.create({
   timeout: 15000,
 })
 
-/**
- * Extrai mensagem de erro legível a partir da resposta da API.
- */
 function extractErrorMessage(error) {
   if (error.response?.data?.message) {
     return error.response.data.message
@@ -33,32 +30,36 @@ api.interceptors.response.use(
 )
 
 export const citizenApi = {
-  /**
-   * Cadastra um novo cidadão.
-   * @param {{ name: string, cpf: string }} data
-   */
   create(data) {
     return api.post('/citizens', data)
   },
 
-  /**
-   * Busca cidadãos por nome ou CPF.
-   * @param {string} query
-   */
   search(query) {
     return api.get('/citizens', { params: { query } })
   },
 
-  /**
-   * Lista cidadãos com paginação e filtro opcional.
-   * @param {{ page?: number, limit?: number, query?: string }} params
-   */
   list({ page = 1, limit = 10, query = '' } = {}) {
     const params = { page, limit }
     if (query) {
       params.query = query
     }
     return api.get('/citizens', { params })
+  },
+
+  getById(id) {
+    return api.get(`/citizens/${id}`)
+  },
+
+  update(id, data) {
+    return api.put(`/citizens/${id}`, data)
+  },
+
+  remove(id) {
+    return api.delete(`/citizens/${id}`)
+  },
+
+  confirmPayment(id) {
+    return api.post(`/citizens/${id}/payment`)
   },
 }
 

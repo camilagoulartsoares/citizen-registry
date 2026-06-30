@@ -2,19 +2,12 @@ import { ref } from 'vue'
 import { citizenApi } from '@/services/api'
 import { useCpfMask } from '@/composables/useCpfMask'
 
-/**
- * Composable central para operações com cidadãos.
- * Encapsula chamadas HTTP, estados de loading e tratamento de erros.
- */
 export function useCitizen() {
   const loading = ref(false)
   const error = ref(null)
 
   const { unmask, format } = useCpfMask()
 
-  /**
-   * Normaliza a resposta da API para um formato consistente de cidadão.
-   */
   function normalizeCitizen(raw) {
     if (!raw) return null
     return {
@@ -23,12 +16,12 @@ export function useCitizen() {
       cpf: raw.cpf,
       cpfFormatted: format(raw.cpf),
       createdAt: raw.createdAt ?? raw.created_at ?? raw.createdDate,
+      paymentStatus: raw.paymentStatus ?? raw.payment_status ?? 'pending',
+      paidAt: raw.paidAt ?? raw.paid_at ?? null,
+      isPaid: (raw.paymentStatus ?? raw.payment_status) === 'paid',
     }
   }
 
-  /**
-   * Extrai lista de cidadãos de diferentes formatos de resposta.
-   */
   function extractCitizens(response) {
     const data = response.data
     if (Array.isArray(data)) return data
@@ -39,23 +32,20 @@ export function useCitizen() {
     return []
   }
 
-  /**
-   * Extrai metadados de paginação da resposta.
-   */
   function extractPagination(response) {
     const data = response.data
     if (data?.pagination) {
       return {
-        total: data.pagination.total ?? data.pagination.totalItems ?? 0,
-        page: data.pagination.page ?? data.pagination.currentPage ?? 1,
-        limit: data.pagination.limit ?? data.pagination.perPage ?? 10,
+        total: data.pagination.total ?? 0,
+        page: data.pagination.page ?? 1,
+        limit: data.pagination.limit ?? 10,
         totalPages: data.pagination.totalPages ?? 1,
       }
     }
     return {
-      total: data?.total ?? data?.totalItems ?? extractCitizens(response).length,
-      page: data?.page ?? data?.currentPage ?? 1,
-      limit: data?.limit ?? data?.perPage ?? 10,
+      total: data?.total ?? 0,
+      page: data?.page ?? 1,
+      limit: data?.limit ?? 10,
       totalPages: data?.totalPages ?? 1,
     }
   }
@@ -64,13 +54,9 @@ export function useCitizen() {
     error.value = null
   }
 
-  /**
-   * Cadastra um novo cidadão.
-   */
   async function createCitizen(name, cpf) {
     loading.value = true
     error.value = null
-
     try {
       const response = await citizenApi.create({
         name: name.trim(),
@@ -95,18 +81,12 @@ export function useCitizen() {
     }
   }
 
-  /**
-   * Busca cidadão por nome ou CPF.
-   */
   async function searchCitizen(query) {
     loading.value = true
     error.value = null
-
     try {
       const response = await citizenApi.search(query.trim())
       const citizens = extractCitizens(response).map(normalizeCitizen)
-
-      // Retorna o primeiro resultado ou null se vazio
       return citizens.length > 0 ? citizens[0] : null
     } catch (err) {
       error.value = err.userMessage ?? 'Erro ao buscar cidadão.'
@@ -116,21 +96,75 @@ export function useCitizen() {
     }
   }
 
-  /**
-   * Lista cidadãos com paginação e filtro opcional.
-   */
   async function listCitizens({ page = 1, limit = 10, query = '' } = {}) {
     loading.value = true
     error.value = null
-
     try {
       const response = await citizenApi.list({ page, limit, query })
-      const citizens = extractCitizens(response).map(normalizeCitizen)
-      const pagination = extractPagination(response)
-
-      return { citizens, pagination }
+      return {
+        citizens: extractCitizens(response).map(normalizeCitizen),
+        pagination: extractPagination(response),
+      }
     } catch (err) {
       error.value = err.userMessage ?? 'Erro ao carregar lista de cidadãos.'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function getCitizen(id) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await citizenApi.getById(id)
+      return normalizeCitizen(response.data)
+    } catch (err) {
+      error.value = err.userMessage ?? 'Erro ao carregar cidadão.'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function updateCitizen(id, name, cpf) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await citizenApi.update(id, {
+        name: name.trim(),
+        cpf: unmask(cpf),
+      })
+      return normalizeCitizen(response.data)
+    } catch (err) {
+      error.value = err.userMessage ?? 'Erro ao atualizar cidadão.'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function deleteCitizen(id) {
+    loading.value = true
+    error.value = null
+    try {
+      await citizenApi.remove(id)
+    } catch (err) {
+      error.value = err.userMessage ?? 'Erro ao remover cidadão.'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function confirmPayment(id) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await citizenApi.confirmPayment(id)
+      return normalizeCitizen(response.data)
+    } catch (err) {
+      error.value = err.userMessage ?? 'Erro ao confirmar pagamento.'
       throw err
     } finally {
       loading.value = false
@@ -144,6 +178,10 @@ export function useCitizen() {
     createCitizen,
     searchCitizen,
     listCitizens,
+    getCitizen,
+    updateCitizen,
+    deleteCitizen,
+    confirmPayment,
     normalizeCitizen,
   }
 }

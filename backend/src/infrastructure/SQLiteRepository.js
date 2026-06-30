@@ -4,6 +4,13 @@ const Citizen = require('../domain/Citizen')
 const CitizenRepository = require('../domain/CitizenRepository')
 const CpfValidator = require('../domain/CpfValidator')
 
+function ensureColumn(db, table, column, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all()
+  if (!columns.some((col) => col.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
+  }
+}
+
 /**
  * Inicializa conexão SQLite e cria tabela se necessário.
  */
@@ -16,24 +23,28 @@ function createDatabase(dbPath) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       cpf TEXT NOT NULL UNIQUE,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      payment_status TEXT NOT NULL DEFAULT 'pending',
+      paid_at TEXT
     )
   `)
 
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_citizens_cpf ON citizens(cpf)
-  `)
+  ensureColumn(db, 'citizens', 'payment_status', "TEXT NOT NULL DEFAULT 'pending'")
+  ensureColumn(db, 'citizens', 'paid_at', 'TEXT')
 
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_citizens_name ON citizens(name)
-  `)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_citizens_cpf ON citizens(cpf)`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_citizens_name ON citizens(name)`)
 
   return db
 }
 
+const SELECT_FIELDS = `
+  id, name, cpf, created_at AS createdAt,
+  payment_status AS paymentStatus, paid_at AS paidAt
+`
+
 /**
  * Implementação SQLite do repositório de cidadãos.
- * Utiliza prepared statements para segurança contra SQL injection.
  */
 class SQLiteRepository extends CitizenRepository {
   constructor(db) {
@@ -41,18 +52,20 @@ class SQLiteRepository extends CitizenRepository {
     this.db = db
 
     this.insertStmt = db.prepare(`
-      INSERT INTO citizens (name, cpf, created_at)
-      VALUES (@name, @cpf, @created_at)
+      INSERT INTO citizens (name, cpf, created_at, payment_status)
+      VALUES (@name, @cpf, @created_at, 'pending')
+    `)
+
+    this.findByIdStmt = db.prepare(`
+      SELECT ${SELECT_FIELDS} FROM citizens WHERE id = ?
     `)
 
     this.findByCpfStmt = db.prepare(`
-      SELECT id, name, cpf, created_at AS createdAt
-      FROM citizens
-      WHERE cpf = ?
+      SELECT ${SELECT_FIELDS} FROM citizens WHERE cpf = ?
     `)
 
     this.findByQueryStmt = db.prepare(`
-      SELECT id, name, cpf, created_at AS createdAt
+      SELECT ${SELECT_FIELDS}
       FROM citizens
       WHERE cpf LIKE ? OR name LIKE ?
       ORDER BY created_at DESC
@@ -65,12 +78,32 @@ class SQLiteRepository extends CitizenRepository {
     `)
 
     this.findAllStmt = db.prepare(`
-      SELECT id, name, cpf, created_at AS createdAt
+      SELECT ${SELECT_FIELDS}
       FROM citizens
       WHERE (? = '' OR cpf LIKE ? OR name LIKE ?)
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `)
+
+    this.updateStmt = db.prepare(`
+      UPDATE citizens SET name = @name, cpf = @cpf WHERE id = @id
+    `)
+
+    this.deleteStmt = db.prepare(`DELETE FROM citizens WHERE id = ?`)
+
+    this.confirmPaymentStmt = db.prepare(`
+      UPDATE citizens
+      SET payment_status = 'paid', paid_at = @paid_at
+      WHERE id = @id
+    `)
+  }
+
+  _searchPatterns(query) {
+    const sanitized = CpfValidator.sanitize(query)
+    const isCpfSearch = /^\d+$/.test(sanitized) && sanitized.length >= 3
+    const cpfPattern = isCpfSearch ? `%${sanitized}%` : `%${query}%`
+    const namePattern = `%${query}%`
+    return { cpfPattern, namePattern }
   }
 
   _mapRow(row) {
@@ -80,18 +113,19 @@ class SQLiteRepository extends CitizenRepository {
       name: row.name,
       cpf: row.cpf,
       createdAt: row.createdAt,
+      paymentStatus: row.paymentStatus,
+      paidAt: row.paidAt,
     })
   }
 
   async create({ name, cpf }) {
     const createdAt = new Date().toISOString()
     const result = this.insertStmt.run({ name, cpf, created_at: createdAt })
-    return this._mapRow({
-      id: result.lastInsertRowid,
-      name,
-      cpf,
-      createdAt,
-    })
+    return this.findById(result.lastInsertRowid)
+  }
+
+  async findById(id) {
+    return this._mapRow(this.findByIdStmt.get(id))
   }
 
   async findByCpf(cpf) {
@@ -100,24 +134,17 @@ class SQLiteRepository extends CitizenRepository {
   }
 
   async findByQuery(query) {
-    const sanitized = CpfValidator.sanitize(query)
-    const isCpfSearch = /^\d+$/.test(sanitized) && sanitized.length >= 3
-    const cpfPattern = isCpfSearch ? `%${sanitized}%` : `%${query}%`
-    const namePattern = `%${query}%`
-
+    const { cpfPattern, namePattern } = this._searchPatterns(query)
     const rows = this.findByQueryStmt.all(cpfPattern, namePattern)
     return rows.map((row) => this._mapRow(row))
   }
 
   async findAll({ page, limit, query }) {
-    const sanitized = CpfValidator.sanitize(query)
-    const isCpfSearch = /^\d+$/.test(sanitized) && sanitized.length >= 3
-    const cpfPattern = isCpfSearch ? `%${sanitized}%` : `%${query}%`
-    const namePattern = `%${query}%`
+    const { cpfPattern, namePattern } = this._searchPatterns(query ?? '')
     const offset = (page - 1) * limit
 
-    const { total } = this.countAllStmt.get(query, cpfPattern, namePattern)
-    const rows = this.findAllStmt.all(query, cpfPattern, namePattern, limit, offset)
+    const { total } = this.countAllStmt.get(query ?? '', cpfPattern, namePattern)
+    const rows = this.findAllStmt.all(query ?? '', cpfPattern, namePattern, limit, offset)
 
     return {
       data: rows.map((row) => this._mapRow(row)),
@@ -126,6 +153,21 @@ class SQLiteRepository extends CitizenRepository {
       limit,
       totalPages: Math.ceil(total / limit) || 1,
     }
+  }
+
+  async update(id, { name, cpf }) {
+    this.updateStmt.run({ id, name, cpf })
+    return this.findById(id)
+  }
+
+  async delete(id) {
+    this.deleteStmt.run(id)
+  }
+
+  async confirmPayment(id) {
+    const paidAt = new Date().toISOString()
+    this.confirmPaymentStmt.run({ id, paid_at: paidAt })
+    return this.findById(id)
   }
 }
 

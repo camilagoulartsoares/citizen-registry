@@ -41,7 +41,7 @@ const routes = [
     component: CitizenListView,
     meta: {
       title: 'Lista de cidadãos',
-      subtitle: 'Visualize todos os cidadãos cadastrados',
+      subtitle: 'Consulte os cidadãos cadastrados no sistema',
       menu: 'lista',
     },
   },
