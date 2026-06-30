@@ -2,10 +2,8 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import SidebarCityArt from '@/components/SidebarCityArt.vue'
-import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()
-const { sidebarCollapsed, toggleSidebar } = useSidebar()
 
 const menuItems = [
   { key: 'inicio', title: 'Início', to: '/', icon: 'mdi-home-outline' },
@@ -22,27 +20,10 @@ function isActive(key) {
 </script>
 
 <template>
-  <aside
-    class="app-sidebar"
-    :class="{ 'app-sidebar--collapsed': sidebarCollapsed }"
-  >
+  <aside class="app-sidebar">
     <div class="sidebar-brand">
-      <div class="sidebar-brand__header">
-        <div class="sidebar-brand__icon-wrap">
-          <v-icon size="22" color="white">mdi-account-outline</v-icon>
-        </div>
-
-        <button
-          type="button"
-          class="sidebar-toggle"
-          :aria-label="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
-          :aria-expanded="!sidebarCollapsed"
-          @click="toggleSidebar"
-        >
-          <v-icon size="20" color="white">
-            {{ sidebarCollapsed ? 'mdi-menu' : 'mdi-menu-open' }}
-          </v-icon>
-        </button>
+      <div class="sidebar-brand__icon-wrap">
+        <v-icon size="22" color="white">mdi-account-outline</v-icon>
       </div>
 
       <div class="sidebar-brand__text">
@@ -54,26 +35,16 @@ function isActive(key) {
     </div>
 
     <nav class="sidebar-nav" aria-label="Menu principal">
-      <v-tooltip
+      <router-link
         v-for="item in menuItems"
         :key="item.key"
-        :text="item.title"
-        location="end"
-        :disabled="!sidebarCollapsed"
+        :to="item.to"
+        class="sidebar-nav__item"
+        :class="{ 'sidebar-nav__item--active': isActive(item.key) }"
       >
-        <template #activator="{ props: tooltipProps }">
-          <router-link
-            v-bind="tooltipProps"
-            :to="item.to"
-            class="sidebar-nav__item"
-            :class="{ 'sidebar-nav__item--active': isActive(item.key) }"
-            :aria-label="item.title"
-          >
-            <v-icon size="20" color="white">{{ item.icon }}</v-icon>
-            <span class="sidebar-nav__label">{{ item.title }}</span>
-          </router-link>
-        </template>
-      </v-tooltip>
+        <v-icon size="20" color="white">{{ item.icon }}</v-icon>
+        <span class="sidebar-nav__label">{{ item.title }}</span>
+      </router-link>
     </nav>
 
     <div class="sidebar-bottom">

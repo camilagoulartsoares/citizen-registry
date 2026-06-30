@@ -1,18 +1,12 @@
 <script setup>
-import { useSidebar } from '@/composables/useSidebar'
 import AppSidebar from '@/components/AppSidebar.vue'
 import AppHeader from '@/components/AppHeader.vue'
 import GlobalSnackbar from '@/components/GlobalSnackbar.vue'
-
-const { sidebarCollapsed } = useSidebar()
 </script>
 
 <template>
   <v-app class="app-root">
-    <div
-      class="app-shell"
-      :class="{ 'app-shell--sidebar-collapsed': sidebarCollapsed }"
-    >
+    <div class="app-shell">
       <AppSidebar />
 
       <main class="app-main">
