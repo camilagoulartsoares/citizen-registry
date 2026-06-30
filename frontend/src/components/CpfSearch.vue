@@ -1,18 +1,20 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useCitizen } from '@/composables/useCitizen'
+import { ref } from 'vue'
+import { useCitizen, resolveApiError } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
 import CitizenCard from '@/components/CitizenCard.vue'
 
-const { loading, error, clearError, searchCitizen } = useCitizen()
+const { loading, clearError, searchCitizen } = useCitizen()
 const { mask, looksLikeCpf } = useCpfMask()
 
 const query = ref('')
 const result = ref(null)
 const searched = ref(false)
+const searchError = ref(null)
 
 function onQueryInput(value) {
   query.value = looksLikeCpf(value) ? mask(value) : value
+  searchError.value = null
   clearError()
   searched.value = false
   result.value = null
@@ -23,16 +25,21 @@ async function handleSearch() {
 
   searched.value = false
   result.value = null
+  searchError.value = null
 
   try {
-    result.value = await searchCitizen(query.value)
+    const found = await searchCitizen(query.value)
     searched.value = true
-  } catch {
+    if (!found) {
+      searchError.value = 'Cidadão não encontrado.'
+      return
+    }
+    result.value = found
+  } catch (err) {
     searched.value = true
+    searchError.value = resolveApiError(err, 'Erro ao buscar cidadão.')
   }
 }
-
-const showNotFound = computed(() => searched.value && !result.value && !loading)
 </script>
 
 <template>
@@ -54,15 +61,15 @@ const showNotFound = computed(() => searched.value && !result.value && !loading)
       </div>
 
       <v-alert
-        v-if="error"
+        v-if="searchError"
         type="error"
         variant="tonal"
         density="compact"
         class="mb-4"
         closable
-        @click:close="clearError"
+        @click:close="searchError = null"
       >
-        {{ error }}
+        {{ searchError }}
       </v-alert>
 
       <v-btn
@@ -80,15 +87,5 @@ const showNotFound = computed(() => searched.value && !result.value && !loading)
     <div v-if="result" class="mt-6">
       <CitizenCard :citizen="result" />
     </div>
-
-    <v-alert
-      v-if="showNotFound"
-      type="warning"
-      variant="tonal"
-      class="mt-6"
-      icon="mdi-alert-circle-outline"
-    >
-      Cidadão não encontrado
-    </v-alert>
   </div>
 </template>

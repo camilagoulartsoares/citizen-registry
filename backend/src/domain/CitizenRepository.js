@@ -30,10 +30,6 @@ class CitizenRepository {
   async delete(_id) {
     throw new Error('Method delete() must be implemented')
   }
-
-  async confirmPayment(_id) {
-    throw new Error('Method confirmPayment() must be implemented')
-  }
 }
 
 module.exports = CitizenRepository

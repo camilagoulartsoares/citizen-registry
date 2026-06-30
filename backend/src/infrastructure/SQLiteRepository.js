@@ -39,8 +39,7 @@ function createDatabase(dbPath) {
 }
 
 const SELECT_FIELDS = `
-  id, name, cpf, created_at AS createdAt,
-  payment_status AS paymentStatus, paid_at AS paidAt
+  id, name, cpf, created_at AS createdAt
 `
 
 /**
@@ -52,8 +51,8 @@ class SQLiteRepository extends CitizenRepository {
     this.db = db
 
     this.insertStmt = db.prepare(`
-      INSERT INTO citizens (name, cpf, created_at, payment_status)
-      VALUES (@name, @cpf, @created_at, 'pending')
+      INSERT INTO citizens (name, cpf, created_at)
+      VALUES (@name, @cpf, @created_at)
     `)
 
     this.findByIdStmt = db.prepare(`
@@ -90,12 +89,6 @@ class SQLiteRepository extends CitizenRepository {
     `)
 
     this.deleteStmt = db.prepare(`DELETE FROM citizens WHERE id = ?`)
-
-    this.confirmPaymentStmt = db.prepare(`
-      UPDATE citizens
-      SET payment_status = 'paid', paid_at = @paid_at
-      WHERE id = @id
-    `)
   }
 
   _searchPatterns(query) {
@@ -113,8 +106,6 @@ class SQLiteRepository extends CitizenRepository {
       name: row.name,
       cpf: row.cpf,
       createdAt: row.createdAt,
-      paymentStatus: row.paymentStatus,
-      paidAt: row.paidAt,
     })
   }
 
@@ -162,12 +153,6 @@ class SQLiteRepository extends CitizenRepository {
 
   async delete(id) {
     this.deleteStmt.run(id)
-  }
-
-  async confirmPayment(id) {
-    const paidAt = new Date().toISOString()
-    this.confirmPaymentStmt.run({ id, paid_at: paidAt })
-    return this.findById(id)
   }
 }
 

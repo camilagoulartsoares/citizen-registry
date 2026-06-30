@@ -2,8 +2,8 @@ const Citizen = require('../domain/Citizen')
 const CpfValidator = require('../domain/CpfValidator')
 
 class DuplicateCpfError extends Error {
-  constructor(cpf) {
-    super(`CPF ${cpf} já está cadastrado no sistema`)
+  constructor() {
+    super('Este CPF já está cadastrado no sistema.')
     this.name = 'DuplicateCpfError'
     this.statusCode = 409
   }
@@ -47,7 +47,7 @@ class RegisterCitizen {
 
     const existing = await this.citizenRepository.findByCpf(sanitizedCpf)
     if (existing) {
-      throw new DuplicateCpfError(sanitizedCpf)
+      throw new DuplicateCpfError()
     }
 
     const citizen = await this.citizenRepository.create({

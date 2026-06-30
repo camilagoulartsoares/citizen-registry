@@ -9,7 +9,6 @@ const ListCitizens = require('../application/ListCitizens')
 const { GetCitizen } = require('../application/GetCitizen')
 const UpdateCitizen = require('../application/UpdateCitizen')
 const DeleteCitizen = require('../application/DeleteCitizen')
-const { ConfirmPayment, PaymentAlreadyConfirmedError } = require('../application/ConfirmPayment')
 const { CitizenNotFoundError } = require('../application/GetCitizen')
 
 /**
@@ -78,15 +77,6 @@ class CitizenController {
       next(error)
     }
   }
-
-  async confirmPayment(req, res, next) {
-    try {
-      const citizen = await this.confirmPayment.execute(Number(req.params.id))
-      res.json(citizen.toJSON())
-    } catch (error) {
-      next(error)
-    }
-  }
 }
 
 function createCitizenController(repository) {
@@ -97,7 +87,6 @@ function createCitizenController(repository) {
     getCitizen: new GetCitizen(repository),
     updateCitizen: new UpdateCitizen(repository),
     deleteCitizen: new DeleteCitizen(repository),
-    confirmPayment: new ConfirmPayment(repository),
   })
 }
 
@@ -108,5 +97,4 @@ module.exports = {
   InvalidCpfError,
   InvalidNameError,
   CitizenNotFoundError,
-  PaymentAlreadyConfirmedError,
 }

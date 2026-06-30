@@ -1,11 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCitizen } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
 import AppPageTabs from '@/components/AppPageTabs.vue'
 import CitizenTable from '@/components/CitizenTable.vue'
 import TablePagination from '@/components/TablePagination.vue'
-import CitizenEditForm from '@/components/CitizenEditForm.vue'
+import CitizenEditDialog from '@/components/CitizenEditDialog.vue'
+import CitizenAttentionDialog from '@/components/CitizenAttentionDialog.vue'
+import CitizenDeleteDialog from '@/components/CitizenDeleteDialog.vue'
+import CitizenDeleteSuccessDialog from '@/components/CitizenDeleteSuccessDialog.vue'
 
 const {
   loading,
@@ -15,7 +18,7 @@ const {
   updateCitizen,
   deleteCitizen,
 } = useCitizen()
-const { mask, looksLikeCpf, format } = useCpfMask()
+const { mask, looksLikeCpf } = useCpfMask()
 
 const citizens = ref([])
 const searchQuery = ref('')
@@ -26,9 +29,14 @@ const limit = 10
 
 const viewDialog = ref(false)
 const editDialog = ref(false)
+const attentionDialog = ref(false)
 const deleteDialog = ref(false)
+const deleteSuccessDialog = ref(false)
+const editSuccess = ref(false)
 const selectedCitizen = ref(null)
-const editFormRef = ref(null)
+const deletedCitizen = ref(null)
+
+const errorMessage = computed(() => error.value || '')
 
 let debounceTimer = null
 
@@ -64,18 +72,25 @@ function onPageChange(page) {
   fetchCitizens()
 }
 
-function openView(citizen) {
-  selectedCitizen.value = citizen
+function openView(citizenRow) {
+  selectedCitizen.value = citizenRow
   viewDialog.value = true
 }
 
-function openEdit(citizen) {
-  selectedCitizen.value = { ...citizen }
+function openEdit(citizenRow) {
+  clearError()
+  editSuccess.value = false
+  selectedCitizen.value = { ...citizenRow }
   editDialog.value = true
 }
 
-function openDelete(citizen) {
-  selectedCitizen.value = citizen
+function openDelete(citizenRow) {
+  selectedCitizen.value = citizenRow
+  attentionDialog.value = true
+}
+
+function proceedToDeleteConfirm() {
+  attentionDialog.value = false
   deleteDialog.value = true
 }
 
@@ -83,21 +98,27 @@ async function handleEditSave({ name, cpf }) {
   if (!selectedCitizen.value) return
   try {
     await updateCitizen(selectedCitizen.value.id, name, cpf)
-    editDialog.value = false
+    editSuccess.value = true
     await fetchCitizens()
+    setTimeout(() => {
+      editDialog.value = false
+      editSuccess.value = false
+    }, 1600)
   } catch {
-    // erro no composable
+    // erro exibido no modal
   }
 }
 
 async function handleDelete() {
   if (!selectedCitizen.value) return
   try {
+    deletedCitizen.value = { ...selectedCitizen.value }
     await deleteCitizen(selectedCitizen.value.id)
     deleteDialog.value = false
+    deleteSuccessDialog.value = true
     await fetchCitizens()
   } catch {
-    // erro no composable
+    // erro exibido na página
   }
 }
 
@@ -148,14 +169,14 @@ onMounted(fetchCitizens)
     </div>
 
     <v-alert
-      v-if="error"
+      v-if="errorMessage"
       type="error"
       variant="tonal"
       class="mb-4"
       closable
       @click:close="clearError"
     >
-      {{ error }}
+      {{ errorMessage }}
     </v-alert>
 
     <div class="ui-card pa-0 overflow-hidden list-card">
@@ -224,43 +245,36 @@ onMounted(fetchCitizens)
     </v-dialog>
 
     <!-- Editar -->
-    <v-dialog v-model="editDialog" max-width="480" persistent>
-      <v-card class="pa-6" rounded="lg">
-        <h3 class="dialog-title mb-4">Editar cidadão</h3>
-        <CitizenEditForm
-          ref="editFormRef"
-          :citizen="selectedCitizen"
-          :loading="loading"
-          @save="handleEditSave"
-        />
-        <div class="d-flex justify-end ga-2 mt-4">
-          <v-btn variant="text" class="text-none" :disabled="loading" @click="editDialog = false">
-            Cancelar
-          </v-btn>
-          <v-btn class="ui-btn-primary text-none" :loading="loading" @click="editFormRef?.submit()">
-            Salvar
-          </v-btn>
-        </div>
-      </v-card>
-    </v-dialog>
+    <CitizenEditDialog
+      v-model="editDialog"
+      :citizen="selectedCitizen"
+      :loading="loading"
+      :error="errorMessage"
+      :success="editSuccess"
+      @save="handleEditSave"
+      @clear-error="clearError"
+    />
 
-    <!-- Remover -->
-    <v-dialog v-model="deleteDialog" max-width="420">
-      <v-card class="pa-6" rounded="lg">
-        <h3 class="dialog-title mb-2">Remover cidadão</h3>
-        <p class="dialog-text mb-4">
-          Tem certeza que deseja remover
-          <strong>{{ selectedCitizen?.name }}</strong>?
-          Esta ação não pode ser desfeita.
-        </p>
-        <div class="d-flex justify-end ga-2">
-          <v-btn variant="text" class="text-none" @click="deleteDialog = false">Cancelar</v-btn>
-          <v-btn color="error" class="text-none" :loading="loading" @click="handleDelete">
-            Remover
-          </v-btn>
-        </div>
-      </v-card>
-    </v-dialog>
+    <!-- Atenção -->
+    <CitizenAttentionDialog
+      v-model="attentionDialog"
+      :citizen="selectedCitizen"
+      @continue="proceedToDeleteConfirm"
+    />
+
+    <!-- Confirmar exclusão -->
+    <CitizenDeleteDialog
+      v-model="deleteDialog"
+      :citizen="selectedCitizen"
+      :loading="loading"
+      @confirm="handleDelete"
+    />
+
+    <!-- Exclusão com sucesso -->
+    <CitizenDeleteSuccessDialog
+      v-model="deleteSuccessDialog"
+      :citizen="deletedCitizen"
+    />
   </div>
 </template>
 

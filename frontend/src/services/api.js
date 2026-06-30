@@ -57,10 +57,6 @@ export const citizenApi = {
   remove(id) {
     return api.delete(`/citizens/${id}`)
   },
-
-  confirmPayment(id) {
-    return api.post(`/citizens/${id}/payment`)
-  },
 }
 
 export default api

@@ -2,10 +2,33 @@ import { ref } from 'vue'
 import { citizenApi } from '@/services/api'
 import { useCpfMask } from '@/composables/useCpfMask'
 
+export function resolveApiError(err, fallback) {
+  const status = err.response?.status
+  const msg = String(err.userMessage ?? err.response?.data?.message ?? '').trim()
+  const lower = msg.toLowerCase()
+
+  if (status === 404 || lower.includes('não encontrado') || lower.includes('nao encontrado')) {
+    return 'Cidadão não encontrado.'
+  }
+
+  if (status === 409 || lower.includes('cadastrado') || lower.includes('duplicad')) {
+    return 'Este CPF já está cadastrado no sistema.'
+  }
+
+  if (lower.includes('mínimo 3') || lower.includes('minimo 3') || lower.includes('nome deve')) {
+    return 'Nome deve ter no mínimo 3 caracteres.'
+  }
+
+  if (lower.includes('cpf inválido') || lower.includes('cpf invalido')) {
+    return 'CPF inválido.'
+  }
+
+  return msg || fallback
+}
+
 export function useCitizen() {
   const loading = ref(false)
   const error = ref(null)
-
   const { unmask, format } = useCpfMask()
 
   function normalizeCitizen(raw) {
@@ -16,9 +39,6 @@ export function useCitizen() {
       cpf: raw.cpf,
       cpfFormatted: format(raw.cpf),
       createdAt: raw.createdAt ?? raw.created_at ?? raw.createdDate,
-      paymentStatus: raw.paymentStatus ?? raw.payment_status ?? 'pending',
-      paidAt: raw.paidAt ?? raw.paid_at ?? null,
-      isPaid: (raw.paymentStatus ?? raw.payment_status) === 'paid',
     }
   }
 
@@ -64,17 +84,7 @@ export function useCitizen() {
       })
       return normalizeCitizen(extractCitizens(response)[0] ?? response.data)
     } catch (err) {
-      const status = err.response?.status
-      if (status === 409 || status === 400) {
-        const msg = err.userMessage?.toLowerCase() ?? ''
-        if (msg.includes('cpf') || msg.includes('duplicad') || msg.includes('exist')) {
-          error.value = 'Este CPF já está cadastrado no sistema.'
-        } else {
-          error.value = err.userMessage
-        }
-      } else {
-        error.value = err.userMessage ?? 'Erro ao cadastrar cidadão.'
-      }
+      error.value = resolveApiError(err, 'Erro ao cadastrar cidadão.')
       throw err
     } finally {
       loading.value = false
@@ -87,9 +97,13 @@ export function useCitizen() {
     try {
       const response = await citizenApi.search(query.trim())
       const citizens = extractCitizens(response).map(normalizeCitizen)
-      return citizens.length > 0 ? citizens[0] : null
+      if (citizens.length === 0) {
+        error.value = 'Cidadão não encontrado.'
+        return null
+      }
+      return citizens[0]
     } catch (err) {
-      error.value = err.userMessage ?? 'Erro ao buscar cidadão.'
+      error.value = resolveApiError(err, 'Erro ao buscar cidadão.')
       throw err
     } finally {
       loading.value = false
@@ -106,7 +120,7 @@ export function useCitizen() {
         pagination: extractPagination(response),
       }
     } catch (err) {
-      error.value = err.userMessage ?? 'Erro ao carregar lista de cidadãos.'
+      error.value = resolveApiError(err, 'Erro ao carregar lista de cidadãos.')
       throw err
     } finally {
       loading.value = false
@@ -120,7 +134,7 @@ export function useCitizen() {
       const response = await citizenApi.getById(id)
       return normalizeCitizen(response.data)
     } catch (err) {
-      error.value = err.userMessage ?? 'Erro ao carregar cidadão.'
+      error.value = resolveApiError(err, 'Erro ao carregar cidadão.')
       throw err
     } finally {
       loading.value = false
@@ -137,7 +151,7 @@ export function useCitizen() {
       })
       return normalizeCitizen(response.data)
     } catch (err) {
-      error.value = err.userMessage ?? 'Erro ao atualizar cidadão.'
+      error.value = resolveApiError(err, 'Erro ao atualizar cidadão.')
       throw err
     } finally {
       loading.value = false
@@ -150,21 +164,7 @@ export function useCitizen() {
     try {
       await citizenApi.remove(id)
     } catch (err) {
-      error.value = err.userMessage ?? 'Erro ao remover cidadão.'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function confirmPayment(id) {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await citizenApi.confirmPayment(id)
-      return normalizeCitizen(response.data)
-    } catch (err) {
-      error.value = err.userMessage ?? 'Erro ao confirmar pagamento.'
+      error.value = resolveApiError(err, 'Erro ao remover cidadão.')
       throw err
     } finally {
       loading.value = false
@@ -181,7 +181,6 @@ export function useCitizen() {
     getCitizen,
     updateCitizen,
     deleteCitizen,
-    confirmPayment,
     normalizeCitizen,
   }
 }

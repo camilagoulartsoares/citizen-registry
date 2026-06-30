@@ -1,19 +1,29 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useCitizen } from '@/composables/useCitizen'
+import { useCitizen, resolveApiError } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
 
-const { loading, error, clearError, createCitizen } = useCitizen()
+const {
+  loading,
+  clearError,
+  createCitizen,
+} = useCitizen()
 const { mask, unmask, isValid } = useCpfMask()
 
 const name = ref('')
 const cpf = ref('')
 const createdCitizen = ref(null)
 const copySuccess = ref(false)
+const formError = ref(null)
 
 const isNameValid = computed(() => name.value.trim().length >= 3)
 const isCpfValid = computed(() => isValid(cpf.value))
 const isFormValid = computed(() => isNameValid.value && isCpfValid.value)
+
+const showNameInvalid = computed(() => {
+  const length = name.value.trim().length
+  return length > 0 && length < 3
+})
 
 const cpfDigits = computed(() => unmask(cpf.value))
 const showCpfStatus = computed(() => cpfDigits.value.length > 0)
@@ -22,20 +32,23 @@ const showCpfValid = computed(() => isCpfValid.value)
 
 function onCpfInput(value) {
   cpf.value = mask(value)
+  formError.value = null
   clearError()
 }
 
 function onNameInput() {
+  formError.value = null
   clearError()
 }
 
 async function handleSubmit() {
   if (!isFormValid.value) return
 
+  formError.value = null
   try {
     createdCitizen.value = await createCitizen(name.value, cpf.value)
-  } catch {
-    // Erro já tratado no composable
+  } catch (err) {
+    formError.value = resolveApiError(err, 'Erro ao cadastrar cidadão.')
   }
 }
 
@@ -56,6 +69,7 @@ function resetForm() {
   name.value = ''
   cpf.value = ''
   createdCitizen.value = null
+  formError.value = null
   clearError()
 }
 </script>
@@ -106,6 +120,10 @@ function resetForm() {
           :disabled="loading"
           @update:model-value="onNameInput"
         />
+        <div v-if="showNameInvalid" class="field-hint field-hint--error mt-2">
+          <v-icon color="error" size="18">mdi-close-circle-outline</v-icon>
+          <span>Nome deve ter no mínimo 3 caracteres.</span>
+        </div>
       </div>
 
       <div class="mb-6">
@@ -139,15 +157,15 @@ function resetForm() {
       </div>
 
       <v-alert
-        v-if="error"
+        v-if="formError"
         type="error"
         variant="tonal"
         density="compact"
         class="mb-4"
         closable
-        @click:close="clearError"
+        @click:close="formError = null"
       >
-        {{ error }}
+        {{ formError }}
       </v-alert>
 
       <v-btn

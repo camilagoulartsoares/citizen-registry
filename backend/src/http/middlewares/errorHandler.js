@@ -4,14 +4,9 @@ const {
   InvalidNameError,
 } = require('../../application/RegisterCitizen')
 const { CitizenNotFoundError } = require('../../application/GetCitizen')
-const { PaymentAlreadyConfirmedError } = require('../../application/ConfirmPayment')
 
 function errorHandler(err, _req, res, _next) {
   if (err instanceof DuplicateCpfError) {
-    return res.status(409).json({ message: err.message })
-  }
-
-  if (err instanceof PaymentAlreadyConfirmedError) {
     return res.status(409).json({ message: err.message })
   }
 
@@ -24,6 +19,11 @@ function errorHandler(err, _req, res, _next) {
   }
 
   console.error(err)
+
+  if (err?.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+    return res.status(409).json({ message: 'Este CPF já está cadastrado no sistema.' })
+  }
+
   res.status(500).json({ message: 'Erro interno do servidor' })
 }
 

@@ -35,7 +35,7 @@ class UpdateCitizen {
     if (sanitizedCpf !== existing.cpf) {
       const duplicate = await this.citizenRepository.findByCpf(sanitizedCpf)
       if (duplicate && duplicate.id !== existing.id) {
-        throw new DuplicateCpfError(sanitizedCpf)
+        throw new DuplicateCpfError()
       }
     }
 
