@@ -89,33 +89,34 @@ function resetForm() {
 </script>
 
 <template>
-  <div>
+  <div class="citizen-form-wrapper" :class="{ 'citizen-form-wrapper--success': createdCitizen }">
     <div v-if="createdCitizen" class="success-panel">
-      <div class="d-flex align-center mb-3">
-        <v-icon color="success" size="22" class="mr-2">mdi-check-circle-outline</v-icon>
-        <span class="success-panel__title">Cidadão cadastrado com sucesso!</span>
+      <div class="success-panel__badge">
+        <v-icon color="success" size="20">mdi-check-circle-outline</v-icon>
+        <span>Cidadão cadastrado com sucesso!</span>
       </div>
 
-      <div class="success-panel__name">{{ createdCitizen.name }}</div>
-      <div class="success-panel__cpf mb-4">CPF: {{ createdCitizen.cpfFormatted }}</div>
+      <div class="success-panel__details">
+        <div class="success-panel__name">{{ createdCitizen.name }}</div>
+        <div class="success-panel__cpf">CPF: {{ createdCitizen.cpfFormatted }}</div>
+      </div>
 
-      <div class="d-flex flex-wrap ga-2">
+      <div class="success-panel__actions">
         <v-btn
           variant="outlined"
           color="primary"
-          size="small"
-          class="text-none"
+          class="success-panel__btn success-panel__btn--outline text-none"
           @click="copyCpf"
         >
+          <v-icon start size="18">mdi-content-copy</v-icon>
           {{ copySuccess ? 'Copiado!' : 'Copiar CPF' }}
         </v-btn>
         <v-btn
-          color="primary"
-          size="small"
-          class="text-none ui-btn-primary"
+          class="success-panel__btn success-panel__btn--primary text-none ui-btn-primary"
           @click="resetForm"
         >
           Cadastrar novo
+          <v-icon end size="18">mdi-plus</v-icon>
         </v-btn>
       </div>
     </div>
@@ -209,25 +210,78 @@ function resetForm() {
 </template>
 
 <style scoped>
-.success-panel {
-  padding: 8px 0;
+.citizen-form-wrapper--success {
+  align-self: flex-start;
+  width: 100%;
 }
 
-.success-panel__title {
-  font-size: 15px;
+.success-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.success-panel__badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
+  line-height: 1.4;
+}
+
+.success-panel__details {
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--color-success-soft);
+  border: 1px solid rgba(141, 198, 63, 0.22);
 }
 
 .success-panel__name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--color-text);
+  line-height: 1.35;
+  margin-bottom: 4px;
 }
 
 .success-panel__cpf {
   font-size: 14px;
+  font-weight: 500;
   color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.success-panel__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.success-panel__btn {
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+.success-panel__btn--outline {
+  border-width: 1.5px !important;
+}
+
+.success-panel__btn--primary {
+  box-shadow: none !important;
+}
+
+@media (max-width: 600px) {
+  .success-panel__actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .citizen-form {

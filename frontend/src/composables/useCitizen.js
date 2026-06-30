@@ -4,6 +4,8 @@ import { useCpfMask } from '@/composables/useCpfMask'
 import { useSnackbar } from '@/composables/useSnackbar'
 
 export const CITIZEN_NOT_FOUND_MESSAGE = 'Cidadão não encontrado'
+export const CSV_EXPORT_EMPTY_MESSAGE =
+  'Não é possível baixar o CSV porque não há cidadãos cadastrados.'
 
 export function resolveApiError(err, fallback) {
   const status = err.response?.status
@@ -184,7 +186,23 @@ export function useCitizen() {
     loading.value = true
     error.value = null
     try {
-      const response = await citizenApi.exportCsv(query.trim())
+      const trimmedQuery = query.trim()
+      const listResponse = await citizenApi.list({
+        page: 1,
+        limit: 1,
+        query: trimmedQuery,
+      })
+      const { total } = extractPagination(listResponse)
+
+      if (total === 0) {
+        const message = trimmedQuery
+          ? 'Não há cidadãos para exportar com os filtros aplicados.'
+          : CSV_EXPORT_EMPTY_MESSAGE
+        notifyError(message)
+        return
+      }
+
+      const response = await citizenApi.exportCsv(trimmedQuery)
       const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')

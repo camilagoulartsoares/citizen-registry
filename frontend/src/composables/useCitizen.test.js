@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useCitizen, resolveApiError, CITIZEN_NOT_FOUND_MESSAGE } from '@/composables/useCitizen'
+import { useCitizen, resolveApiError, CITIZEN_NOT_FOUND_MESSAGE, CSV_EXPORT_EMPTY_MESSAGE } from '@/composables/useCitizen'
 import { citizenApi } from '@/services/api'
 
 const showError = vi.fn()
@@ -89,6 +89,24 @@ describe('useCitizen', () => {
         name: 'Maria Silva',
         cpf: '52998224725',
       })
+    })
+  })
+
+  describe('downloadCitizensCsv', () => {
+    it('exibe mensagem quando não há cidadãos cadastrados', async () => {
+      citizenApi.list.mockResolvedValue({
+        data: {
+          data: [],
+          pagination: { total: 0, page: 1, limit: 1, totalPages: 0 },
+        },
+      })
+
+      const { downloadCitizensCsv, error } = useCitizen()
+      await downloadCitizensCsv()
+
+      expect(citizenApi.exportCsv).not.toHaveBeenCalled()
+      expect(error.value).toBe(CSV_EXPORT_EMPTY_MESSAGE)
+      expect(showError).toHaveBeenCalledWith(CSV_EXPORT_EMPTY_MESSAGE)
     })
   })
 })

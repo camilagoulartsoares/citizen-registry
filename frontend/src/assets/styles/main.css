@@ -1595,6 +1595,19 @@ body {
   .home-cards .ui-card__body > * {
     flex: 1;
   }
+
+  .home-cards .ui-card__body > .citizen-form-wrapper--success {
+    flex: 0 1 auto;
+  }
+
+  .home-cards .ui-card__body:has(.citizen-form-wrapper--success) {
+    min-height: 0;
+  }
+
+  .home-cards .v-col:has(.citizen-form-wrapper--success) .ui-card--home {
+    align-self: flex-start;
+    height: auto;
+  }
 }
 
 @media (max-width: 960px) {
