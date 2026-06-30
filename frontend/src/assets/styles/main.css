@@ -777,6 +777,145 @@ body {
   opacity: 0.55 !important;
 }
 
+/* ── Skeleton loaders ── */
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.14) 0%,
+    rgba(148, 163, 184, 0.28) 50%,
+    rgba(148, 163, 184, 0.14) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.skeleton-shimmer--icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-shimmer--card-title {
+  width: 168px;
+  height: 18px;
+  margin-bottom: 8px;
+}
+
+.skeleton-shimmer--card-title-short {
+  width: 132px;
+}
+
+.skeleton-shimmer--card-desc {
+  width: 100%;
+  max-width: 280px;
+  height: 12px;
+  margin-bottom: 6px;
+}
+
+.skeleton-shimmer--card-desc-short {
+  max-width: 220px;
+}
+
+.skeleton-shimmer--card-desc-single {
+  max-width: 240px;
+  margin-bottom: 0;
+}
+
+.skeleton-shimmer--label {
+  width: 108px;
+  height: 13px;
+  margin-bottom: 8px;
+}
+
+.skeleton-shimmer--label-short {
+  width: 36px;
+}
+
+.skeleton-shimmer--label-wide {
+  width: 156px;
+}
+
+.skeleton-shimmer--input {
+  width: 100%;
+  height: 48px;
+  border-radius: 10px;
+}
+
+.skeleton-shimmer--hint {
+  width: 72%;
+  height: 24px;
+  margin-top: 8px;
+  border-radius: 6px;
+}
+
+.skeleton-shimmer--hint-tall {
+  height: 44px;
+}
+
+.skeleton-shimmer--button {
+  width: 100%;
+  height: 44px;
+  border-radius: var(--radius-btn);
+}
+
+.skeleton-shimmer--section-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-shimmer--section-title {
+  width: 132px;
+  height: 18px;
+}
+
+.skeleton-shimmer--section-subtitle {
+  width: min(320px, 100%);
+  height: 13px;
+  margin-left: 28px;
+}
+
+.skeleton-shimmer--quick-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 14px;
+}
+
+.skeleton-shimmer--quick-title {
+  width: 128px;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeleton-shimmer--quick-subtitle {
+  width: 88%;
+  height: 12px;
+}
+
+.skeleton-shimmer--quick-arrow {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
 .section-header {
   margin: 36px 0 20px;
 }
@@ -1262,6 +1401,16 @@ body {
 .v-theme--dark .quick-card,
 .v-theme--dark .ui-card {
   background: var(--color-surface);
+}
+
+.v-theme--dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.08) 0%,
+    rgba(148, 163, 184, 0.18) 50%,
+    rgba(148, 163, 184, 0.08) 100%
+  );
+  background-size: 200% 100%;
 }
 
 .v-theme--dark .quick-card:hover {
