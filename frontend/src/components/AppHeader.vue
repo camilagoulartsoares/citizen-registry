@@ -2,9 +2,11 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppTheme } from '@/composables/useAppTheme'
+import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()
 const { isDark, toggleTheme } = useAppTheme()
+const { sidebarCollapsed, toggleSidebar } = useSidebar()
 
 const title = computed(() => route.meta.title ?? 'Início')
 const subtitle = computed(() => route.meta.subtitle ?? 'Bem-vindo ao Cadastro CPF')
@@ -12,9 +14,20 @@ const subtitle = computed(() => route.meta.subtitle ?? 'Bem-vindo ao Cadastro CP
 
 <template>
   <header class="app-header">
-    <div>
-      <h1 class="app-header__title">{{ title }}</h1>
-      <p class="app-header__subtitle">{{ subtitle }}</p>
+    <div class="app-header__leading">
+      <v-btn
+        icon="mdi-menu"
+        variant="text"
+        color="default"
+        class="app-header__menu-btn"
+        :aria-label="sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'"
+        @click="toggleSidebar"
+      />
+
+      <div>
+        <h1 class="app-header__title">{{ title }}</h1>
+        <p class="app-header__subtitle">{{ subtitle }}</p>
+      </div>
     </div>
 
     <div class="app-header__actions">
@@ -44,6 +57,17 @@ const subtitle = computed(() => route.meta.subtitle ?? 'Bem-vindo ao Cadastro CP
 </template>
 
 <style scoped>
+.app-header__leading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.app-header__menu-btn {
+  flex-shrink: 0;
+}
+
 .app-header__actions {
   display: flex;
   align-items: center;
@@ -52,5 +76,11 @@ const subtitle = computed(() => route.meta.subtitle ?? 'Bem-vindo ao Cadastro CP
 
 .app-header__theme-btn {
   flex-shrink: 0;
+}
+
+@media (max-width: 960px) {
+  .app-header__menu-btn {
+    display: none;
+  }
 }
 </style>

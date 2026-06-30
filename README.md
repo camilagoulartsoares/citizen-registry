@@ -8,13 +8,23 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 
 | Recurso | URL |
 |---------|-----|
-| **Aplicação web** | https://citizen-registry-system.vercel.app |
-| **API (Render)** | https://citizen-registry-system-backend.onrender.com |
+| **Aplicação web (Vue)** | https://citizen-registry-system.vercel.app |
 | **Swagger UI** | https://citizen-registry-system-backend.onrender.com/api-docs |
 | **OpenAPI JSON** | https://citizen-registry-system-backend.onrender.com/api-docs.json |
 | **Health check** | https://citizen-registry-system-backend.onrender.com/health |
 
-> No plano free do Render, a primeira requisição após inatividade pode levar ~50s para responder.
+> A raiz do backend (`/`) redireciona automaticamente para o **Swagger**.  
+> No plano free do Render, a primeira requisição após inatividade pode levar ~50s.
+
+### Vercel — app errado ou projeto React antigo?
+
+Se o link da Vercel abre **outra aplicação**, o deploy está apontando para a pasta errada:
+
+1. Vercel → **Project Settings** → **General** → **Root Directory** → deixe **vazio** (usa `vercel.json` na raiz) **ou** selecione `frontend`
+2. **Environment Variables** → `VITE_API_URL` = `https://citizen-registry-system-backend.onrender.com`
+3. **Redeploy** o projeto
+
+O arquivo `vercel.json` na raiz do repositório já configura build em `frontend/dist`.
 
 ---
 
@@ -24,7 +34,7 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 |---|---|
 | **Swagger UI** | Documentação interativa da API em `/api-docs` — teste endpoints pelo navegador |
 | **Clean Architecture** | Backend em camadas: Domain → Application → Infrastructure → HTTP |
-| **68 testes** | 55 Jest (backend) + 13 Vitest (frontend) |
+| **72 testes** | 56 Jest + 13 Vitest + 3 Playwright E2E + GitHub Actions CI |
 | **CRUD completo** | Cadastrar, listar, buscar, editar, remover cidadãos |
 | **Exportação CSV** | `GET /citizens/export` + download na interface |
 | **Rate limiting** | Proteção básica para produção (100 req/IP / 15 min) |
@@ -71,7 +81,7 @@ cd backend && npm run dev
 |--------|-------------|
 | **Backend** | Node.js, Express 4, better-sqlite3, CORS, Swagger (OpenAPI), express-rate-limit |
 | **Frontend** | Vue 3 (Composition API), Vuetify 3, Vue Router 4, Vite 6, Axios |
-| **Testes** | Jest 29 + supertest (backend), Vitest + Vue Test Utils (frontend) |
+| **Testes** | Jest + supertest (backend), Vitest (frontend), **Playwright E2E**, **GitHub Actions CI** |
 | **Infraestrutura** | Docker, docker-compose |
 | **Dev** | concurrently (sobe back + front juntos) |
 
@@ -635,8 +645,10 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 
 | Comando | O que faz |
 |---------|-----------|
-| `npm test` (na raiz) | Roda **68 testes** (55 backend + 13 frontend) |
-| `cd backend && npm test` | Só backend (55 testes) |
+| `npm test` (na raiz) | Roda **69 testes** unitários (56 backend + 13 frontend) |
+| `npm run test:e2e` | 3 testes Playwright E2E |
+| `npm run test:all` | Unitários + E2E (**72 testes**) |
+| `cd backend && npm test` | Só backend (56 testes) |
 | `cd backend && npm run test:integration` | Só integração HTTP (supertest) |
 | `cd frontend && npm test` | Só frontend (13 testes) |
 | `cd backend && npm run test:coverage` | Cobertura em `backend/coverage/` |
@@ -699,7 +711,31 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 - App Express real com SQLite em memória (`createTestApp`)
 - Valida status HTTP e corpo das respostas de ponta a ponta
 
-**Total: 55 testes (backend).**
+**Total: 56 testes (backend).**
+
+### Testes E2E (Playwright)
+
+| Arquivo | Cobertura |
+|---------|-----------|
+| `e2e/home.spec.js` | Página inicial, acesso rápido, navegação pela sidebar |
+| `e2e/cadastro.spec.js` | Validação de nome curto no formulário |
+
+```bash
+VITE_API_URL=http://127.0.0.1:3001 npm run build --prefix frontend
+npm run test:e2e
+```
+
+**Total: 3 testes E2E.**
+
+### CI/CD (GitHub Actions)
+
+Workflow `.github/workflows/ci.yml` — em todo `push`/`pull_request` na `main`:
+
+| Job | Comando |
+|-----|---------|
+| Backend (Jest) | `npm test --prefix backend` |
+| Frontend (Vitest) | `npm test --prefix frontend` |
+| E2E (Playwright) | build + `npm run test:e2e` |
 
 ### Testes do frontend (Vitest)
 
@@ -711,7 +747,7 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 | `CitizenForm.test.js` | Validação visual de nome curto e botão desabilitado |
 | `useCitizen.test.js` | `resolveApiError` e `createCitizen` com CPF duplicado (API mockada) |
 
-**Total: 13 testes (frontend).** `npm test` na raiz = **68 testes** no total.
+**Total: 13 testes (Vitest).** `npm run test:all` = **72 testes** no total.
 
 ### Teste manual da API (com servidor rodando)
 
@@ -805,9 +841,3 @@ flowchart TB
     end
 ```
 
-## O que eu adicionaria com mais tempo
-
-- Autenticação JWT e controle de acesso por perfil
-- Testes E2E com Playwright
-- CI/CD com GitHub Actions
-- Paginação por cursor para grandes volumes

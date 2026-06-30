@@ -35,3 +35,7 @@ coverage/
 
 # Vite
 frontend/node_modules/.vite/
+
+# Playwright
+test-results/
+playwright-report/

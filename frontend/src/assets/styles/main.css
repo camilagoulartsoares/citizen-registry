@@ -17,7 +17,10 @@
   --color-border: #e6eaf0;
   --color-error: #dc2626;
 
-  --sidebar-width: 260px;
+  --sidebar-width-expanded: 260px;
+  --sidebar-width-collapsed: 72px;
+  --sidebar-width: var(--sidebar-width-expanded);
+  --sidebar-transition: 250ms ease;
   --sidebar-gradient: linear-gradient(180deg, #0b6a3e 0%, #064c2d 100%);
   --sidebar-active: #1a9455;
   --sidebar-nav-radius: 10px;
@@ -48,6 +51,11 @@ body {
   min-height: 100vh;
   width: 100%;
   background: var(--color-bg);
+  --sidebar-width: var(--sidebar-width-expanded);
+}
+
+.app-shell--sidebar-collapsed {
+  --sidebar-width: var(--sidebar-width-collapsed);
 }
 
 .app-sidebar {
@@ -62,6 +70,10 @@ body {
   left: 0;
   bottom: 0;
   z-index: 100;
+  overflow: hidden;
+  transition:
+    width var(--sidebar-transition),
+    min-width var(--sidebar-transition);
 }
 
 .app-main {
@@ -71,6 +83,9 @@ body {
   min-height: 100vh;
   width: calc(100% - var(--sidebar-width));
   background: var(--color-bg);
+  transition:
+    margin-left var(--sidebar-transition),
+    width var(--sidebar-transition);
 }
 
 .app-content {
@@ -878,6 +893,40 @@ body {
   padding: 28px 24px 24px;
 }
 
+.sidebar-brand__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sidebar-toggle {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.sidebar-brand__text {
+  overflow: hidden;
+  max-height: 80px;
+  opacity: 1;
+  transition:
+    opacity var(--sidebar-transition),
+    max-height var(--sidebar-transition);
+}
+
 .sidebar-brand__icon-wrap {
   width: 40px;
   height: 40px;
@@ -887,6 +936,8 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: 14px;
+  flex-shrink: 0;
+  transition: margin var(--sidebar-transition);
 }
 
 .sidebar-brand__title {
@@ -922,7 +973,22 @@ body {
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    padding var(--sidebar-transition),
+    gap var(--sidebar-transition),
+    justify-content var(--sidebar-transition);
+}
+
+.sidebar-nav__label,
+.sidebar-footer__label {
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  max-width: 220px;
+  transition:
+    opacity var(--sidebar-transition),
+    max-width var(--sidebar-transition);
 }
 
 .sidebar-nav__item:hover {
@@ -939,6 +1005,12 @@ body {
   position: relative;
   margin-top: auto;
   flex-shrink: 0;
+  overflow: hidden;
+  max-height: 280px;
+  opacity: 1;
+  transition:
+    opacity var(--sidebar-transition),
+    max-height var(--sidebar-transition);
 }
 
 .sidebar-decoration {
@@ -1016,6 +1088,57 @@ body {
 
 .sidebar-footer__item:last-child {
   margin-bottom: 0;
+}
+
+.app-sidebar--collapsed .sidebar-brand,
+.app-shell--sidebar-collapsed .sidebar-brand {
+  padding: 20px 12px 16px;
+}
+
+.app-sidebar--collapsed .sidebar-brand__header,
+.app-shell--sidebar-collapsed .sidebar-brand__header {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-sidebar--collapsed .sidebar-brand__icon-wrap,
+.app-shell--sidebar-collapsed .sidebar-brand__icon-wrap {
+  margin-bottom: 0;
+}
+
+.app-sidebar--collapsed .sidebar-brand__text,
+.app-shell--sidebar-collapsed .sidebar-brand__text {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-sidebar--collapsed .sidebar-nav,
+.app-shell--sidebar-collapsed .sidebar-nav {
+  padding: 8px 10px;
+}
+
+.app-sidebar--collapsed .sidebar-nav__item,
+.app-shell--sidebar-collapsed .sidebar-nav__item {
+  justify-content: center;
+  gap: 0;
+  padding: 11px 0;
+}
+
+.app-sidebar--collapsed .sidebar-nav__label,
+.app-shell--sidebar-collapsed .sidebar-nav__label,
+.app-sidebar--collapsed .sidebar-footer__label,
+.app-shell--sidebar-collapsed .sidebar-footer__label {
+  max-width: 0;
+  opacity: 0;
+}
+
+.app-sidebar--collapsed .sidebar-bottom,
+.app-shell--sidebar-collapsed .sidebar-bottom {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .field-input .v-field {

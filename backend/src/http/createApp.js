@@ -13,6 +13,10 @@ function createApp(repository) {
   app.use(rateLimitMiddleware())
   app.use(express.json())
 
+  app.get('/', (_req, res) => {
+    res.redirect('/api-docs')
+  })
+
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' })
   })

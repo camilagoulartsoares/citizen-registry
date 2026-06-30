@@ -22,6 +22,15 @@ describe('System HTTP routes', () => {
     })
   })
 
+  describe('GET /', () => {
+    it('redireciona para o Swagger', async () => {
+      const response = await request(app).get('/')
+
+      expect(response.status).toBe(302)
+      expect(response.headers.location).toBe('/api-docs')
+    })
+  })
+
   describe('GET /api-docs.json', () => {
     it('expõe especificação OpenAPI', async () => {
       const response = await request(app).get('/api-docs.json')
