@@ -18,6 +18,7 @@ const {
   listCitizens,
   updateCitizen,
   deleteCitizen,
+  downloadCitizensCsv,
 } = useCitizen()
 const { mask, looksLikeCpf } = useCpfMask()
 
@@ -71,6 +72,14 @@ async function fetchCitizens() {
 function onPageChange(page) {
   currentPage.value = page
   fetchCitizens()
+}
+
+async function handleDownloadCsv() {
+  try {
+    await downloadCitizensCsv(searchQuery.value.trim())
+  } catch {
+    // erro exibido pelo alerta
+  }
 }
 
 function openView(citizenRow) {
@@ -161,6 +170,17 @@ onMounted(fetchCitizens)
         @click:clear="onSearchInput('')"
       />
       <v-btn
+        variant="outlined"
+        color="primary"
+        class="list-toolbar__btn text-none"
+        prepend-icon="mdi-download"
+        :loading="loading"
+        :disabled="loading"
+        @click="handleDownloadCsv"
+      >
+        Baixar CSV
+      </v-btn>
+      <v-btn
         to="/cadastrar"
         class="ui-btn-green list-toolbar__btn text-none"
         prepend-icon="mdi-plus"
@@ -168,17 +188,6 @@ onMounted(fetchCitizens)
         Novo cidadão
       </v-btn>
     </div>
-
-    <v-alert
-      v-if="errorMessage"
-      type="error"
-      variant="tonal"
-      class="mb-4"
-      closable
-      @click:close="clearError"
-    >
-      {{ errorMessage }}
-    </v-alert>
 
     <div class="ui-card pa-0 overflow-hidden list-card">
       <CitizenTable

@@ -3,6 +3,7 @@ import HomeView from '@/views/HomeView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import SearchView from '@/views/SearchView.vue'
 import CitizenListView from '@/views/CitizenListView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 
 const routes = [
   {
@@ -43,6 +44,15 @@ const routes = [
       title: 'Lista de cidadãos',
       subtitle: 'Consulte os cidadãos cadastrados no sistema',
       menu: 'lista',
+    },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: NotFoundView,
+    meta: {
+      title: 'Página não encontrada',
+      subtitle: 'O endereço acessado não existe',
     },
   },
 ]

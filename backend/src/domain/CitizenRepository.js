@@ -23,6 +23,10 @@ class CitizenRepository {
     throw new Error('Method findAll() must be implemented')
   }
 
+  async findAllForExport({ _query }) {
+    throw new Error('Method findAllForExport() must be implemented')
+  }
+
   async update(_id, _data) {
     throw new Error('Method update() must be implemented')
   }

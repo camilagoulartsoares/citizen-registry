@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { useCitizen, resolveApiError } from '@/composables/useCitizen'
+import { useCitizen } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
 import CitizenCard from '@/components/CitizenCard.vue'
 
@@ -10,11 +10,9 @@ const { mask, looksLikeCpf } = useCpfMask()
 const query = ref('')
 const result = ref(null)
 const searched = ref(false)
-const searchError = ref(null)
 
 function onQueryInput(value) {
   query.value = looksLikeCpf(value) ? mask(value) : value
-  searchError.value = null
   clearError()
   searched.value = false
   result.value = null
@@ -25,19 +23,14 @@ async function handleSearch() {
 
   searched.value = false
   result.value = null
-  searchError.value = null
 
   try {
     const found = await searchCitizen(query.value)
     searched.value = true
-    if (!found) {
-      searchError.value = 'Cidadão não encontrado.'
-      return
-    }
+    if (!found) return
     result.value = found
-  } catch (err) {
+  } catch {
     searched.value = true
-    searchError.value = resolveApiError(err, 'Erro ao buscar cidadão.')
   }
 }
 </script>
@@ -59,18 +52,6 @@ async function handleSearch() {
           @update:model-value="onQueryInput"
         />
       </div>
-
-      <v-alert
-        v-if="searchError"
-        type="error"
-        variant="tonal"
-        density="compact"
-        class="mb-4"
-        closable
-        @click:close="searchError = null"
-      >
-        {{ searchError }}
-      </v-alert>
 
       <v-btn
         type="submit"

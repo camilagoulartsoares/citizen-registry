@@ -110,6 +110,7 @@ Backend:  GET http://localhost:3000/citizens?page=1&limit=10
 1. Cadastre um cidadão com CPF válido (ex: `529.982.247-25`)
 2. Use a busca com o nome ou CPF cadastrado
 3. Acesse **Lista de cidadãos** para ver a tabela paginada
+4. Clique em **Baixar CSV** na home ou na lista para exportar os dados
 
 ## API
 
@@ -124,7 +125,7 @@ Backend:  GET http://localhost:3000/citizens?page=1&limit=10
 | `GET` | `/citizens/:id` | Visualizar por ID |
 | `PUT` | `/citizens/:id` | Editar cidadão |
 | `DELETE` | `/citizens/:id` | Remover cidadão (204) |
-| `POST` | `/citizens/:id/payment` | Confirmar pagamento |
+| `GET` | `/citizens/export?query=` | Exportar cidadãos em CSV |
 
 ### Listagem paginada
 
@@ -144,6 +145,12 @@ Backend:  GET http://localhost:3000/citizens?page=1&limit=10
 
 A paginação é feita no backend com `LIMIT` + `OFFSET` — o frontend recebe apenas os registros da página atual.
 
+### Exportação CSV
+
+**Rota:** `GET /citizens/export?query=` (filtro opcional por nome ou CPF)
+
+Retorna arquivo `text/csv` com colunas **Nome**, **CPF** e **Data de cadastro**. O frontend oferece download na home (atalho **Baixar CSV**) e na lista de cidadãos (respeitando o filtro de busca ativo).
+
 ### Erros da API
 
 | Erro | HTTP | Mensagem |
@@ -152,7 +159,6 @@ A paginação é feita no backend com `LIMIT` + `OFFSET` — o frontend recebe a
 | `InvalidCpfError` | 400 | CPF inválido |
 | `DuplicateCpfError` | 409 | CPF já cadastrado |
 | `CitizenNotFoundError` | 404 | Cidadão não encontrado |
-| `PaymentAlreadyConfirmedError` | 409 | Pagamento já confirmado |
 
 ## Arquitetura
 
@@ -183,7 +189,7 @@ Infrastructure (SQLiteRepository — implementa a interface)
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `Citizen.js` | Entidade com `id`, `name`, `cpf`, `createdAt`, `paymentStatus`, `paidAt` |
+| `Citizen.js` | Entidade com `id`, `name`, `cpf`, `createdAt` |
 | `CpfValidator.js` | Sanitização e validação por dígitos verificadores da Receita Federal |
 | `CitizenRepository.js` | Interface/contrato do repositório |
 
@@ -197,7 +203,7 @@ Infrastructure (SQLiteRepository — implementa a interface)
 | GetCitizen | `GetCitizen.js` | Busca cidadão por ID |
 | UpdateCitizen | `UpdateCitizen.js` | Atualiza nome e CPF |
 | DeleteCitizen | `DeleteCitizen.js` | Remove cidadão por ID |
-| ConfirmPayment | `ConfirmPayment.js` | Confirma pagamento |
+| ExportCitizens | `ExportCitizens.js` | Exporta cidadãos para CSV |
 
 #### Infrastructure
 
@@ -216,9 +222,7 @@ CREATE TABLE citizens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   cpf TEXT NOT NULL UNIQUE,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  payment_status TEXT NOT NULL DEFAULT 'pending',
-  paid_at TEXT
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 ```
 
@@ -256,6 +260,7 @@ Backend API (/api → proxy Vite)
 | `/cadastrar` | `RegisterView` | Formulário de cadastro |
 | `/consultar` | `SearchView` | Busca por nome ou CPF |
 | `/citizens` | `CitizenListView` | Lista de cidadãos com tabela paginada |
+| `*` | `NotFoundView` | Página 404 customizada |
 
 #### Telas
 
@@ -265,7 +270,7 @@ Backend API (/api → proxy Vite)
 
 **Consultar CPF** — busca por nome ou CPF, exibe card com dados do cidadão.
 
-**Lista de cidadãos** — abas de navegação, busca com debounce (400ms), botão "+ Novo cidadão", tabela com paginação real no backend, diálogos de visualizar, editar e remover.
+**Lista de cidadãos** — abas de navegação, busca com debounce (400ms), botões **Baixar CSV** e **+ Novo cidadão**, tabela com skeleton loader e paginação real no backend, diálogos de visualizar, editar e remover.
 
 #### Componentes
 
@@ -281,7 +286,8 @@ Backend API (/api → proxy Vite)
 | `CitizenCard.vue` | Card de exibição de um cidadão |
 | `CitizenTable.vue` | Tabela com ações (visualizar, editar, remover) |
 | `TablePagination.vue` | Paginação customizada |
-| `QuickAccessGrid.vue` | Grid de atalhos na home |
+| `QuickAccessGrid.vue` | Grid de atalhos na home (inclui **Baixar CSV**) |
+| `GlobalSnackbar.vue` | Toast global de sucesso/erro |
 
 **Ações da tabela:** ícones em botões quadrados com borda — olho e lápis em cinza (`#6B7280`), lixeira em vermelho (`#DC2626`).
 
@@ -289,11 +295,26 @@ Backend API (/api → proxy Vite)
 
 **`useCpfMask.js`** — `unmask`, `mask`, `format`, `looksLikeCpf`, `isValid` (dígitos verificadores).
 
-**`useCitizen.js`** — `loading`, `error`, `createCitizen`, `searchCitizen`, `listCitizens`, `getCitizen`, `updateCitizen`, `deleteCitizen`, `confirmPayment`, `normalizeCitizen` e mensagens de erro em português.
+**`useCitizen.js`** — `loading`, `error`, `createCitizen`, `searchCitizen`, `listCitizens`, `getCitizen`, `updateCitizen`, `deleteCitizen`, `downloadCitizensCsv`, `normalizeCitizen` e mensagens de erro em português.
+
+**`useSnackbar.js`** — feedback global reutilizável (`showSuccess`, `showError`).
+
+**`useAppTheme.js`** — alternância de tema claro/escuro com persistência em `localStorage`.
 
 #### Serviço de API (`services/api.js`)
 
-Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métodos: `create`, `search`, `list`, `getById`, `update`, `remove`, `confirmPayment`.
+Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métodos: `create`, `search`, `list`, `getById`, `update`, `remove`, `exportCsv`.
+
+## Experiência do usuário
+
+| Recurso | Descrição |
+|---------|-----------|
+| **Dark mode** | Botão no header alterna tema claro/escuro (Vuetify + tokens CSS) |
+| **Snackbar global** | Toasts de sucesso/erro centralizados em `GlobalSnackbar` |
+| **Skeleton loader** | Tabela exibe skeleton enquanto carrega (sem spinner) |
+| **Página 404** | Rota catch-all com `NotFoundView` |
+| **Transição de rotas** | Fade suave entre páginas |
+| **Favicon e título** | Ícone SVG personalizado e título dinâmico por rota |
 
 ## Identidade visual (GESUAS)
 
@@ -373,5 +394,4 @@ flowchart TB
 - Testes unitários no frontend (Vitest)
 - CI/CD com GitHub Actions
 - Paginação por cursor para grandes volumes
-- Exportação CSV/PDF da lista
 - Swagger/OpenAPI para documentação da API

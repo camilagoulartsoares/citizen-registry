@@ -57,6 +57,17 @@ export const citizenApi = {
   remove(id) {
     return api.delete(`/citizens/${id}`)
   },
+
+  exportCsv(query = '') {
+    const params = {}
+    if (query) {
+      params.query = query
+    }
+    return api.get('/citizens/export', {
+      params,
+      responseType: 'blob',
+    })
+  },
 }
 
 export default api

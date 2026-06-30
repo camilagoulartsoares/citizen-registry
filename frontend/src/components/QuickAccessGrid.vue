@@ -1,7 +1,11 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useCitizen } from '@/composables/useCitizen'
 
 const router = useRouter()
+const { downloadCitizensCsv } = useCitizen()
+const downloading = ref(false)
 
 const items = [
   {
@@ -23,16 +27,33 @@ const items = [
     to: '/citizens',
   },
   {
-    title: 'Relatórios',
-    subtitle: 'Estatísticas e dados',
-    icon: 'mdi-chart-bar',
-    to: null,
+    title: 'Baixar CSV',
+    subtitle: 'Exportar cidadãos cadastrados',
+    icon: 'mdi-download',
+    action: 'download',
   },
 ]
 
 function handleClick(item) {
   if (item.to) {
     router.push(item.to)
+    return
+  }
+
+  if (item.action === 'download') {
+    handleDownload()
+  }
+}
+
+async function handleDownload() {
+  if (downloading.value) return
+  downloading.value = true
+  try {
+    await downloadCitizensCsv()
+  } catch {
+    // erro exibido pelo composable quando necessário
+  } finally {
+    downloading.value = false
   }
 }
 </script>
@@ -59,6 +80,7 @@ function handleClick(item) {
           :is="item.to ? 'router-link' : 'div'"
           :to="item.to"
           class="quick-card"
+          :class="{ 'quick-card--loading': item.action === 'download' && downloading }"
           @click="!item.to && handleClick(item)"
         >
           <div class="quick-card__icon-wrap">
@@ -67,7 +89,14 @@ function handleClick(item) {
           <div class="quick-card__title">{{ item.title }}</div>
           <div class="quick-card__subtitle">{{ item.subtitle }}</div>
           <div class="quick-card__arrow">
-            <v-icon class="quick-card__arrow-icon" size="14">mdi-arrow-right</v-icon>
+            <v-progress-circular
+              v-if="item.action === 'download' && downloading"
+              indeterminate
+              size="14"
+              width="2"
+              color="primary"
+            />
+            <v-icon v-else class="quick-card__arrow-icon" size="14">mdi-arrow-right</v-icon>
           </div>
         </component>
       </v-col>

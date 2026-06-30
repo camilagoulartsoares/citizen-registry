@@ -23,14 +23,9 @@ function createDatabase(dbPath) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       cpf TEXT NOT NULL UNIQUE,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      payment_status TEXT NOT NULL DEFAULT 'pending',
-      paid_at TEXT
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `)
-
-  ensureColumn(db, 'citizens', 'payment_status', "TEXT NOT NULL DEFAULT 'pending'")
-  ensureColumn(db, 'citizens', 'paid_at', 'TEXT')
 
   db.exec(`CREATE INDEX IF NOT EXISTS idx_citizens_cpf ON citizens(cpf)`)
   db.exec(`CREATE INDEX IF NOT EXISTS idx_citizens_name ON citizens(name)`)
@@ -82,6 +77,13 @@ class SQLiteRepository extends CitizenRepository {
       WHERE (? = '' OR cpf LIKE ? OR name LIKE ?)
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
+    `)
+
+    this.findAllForExportStmt = db.prepare(`
+      SELECT ${SELECT_FIELDS}
+      FROM citizens
+      WHERE (? = '' OR cpf LIKE ? OR name LIKE ?)
+      ORDER BY created_at DESC
     `)
 
     this.updateStmt = db.prepare(`
@@ -144,6 +146,12 @@ class SQLiteRepository extends CitizenRepository {
       limit,
       totalPages: Math.ceil(total / limit) || 1,
     }
+  }
+
+  async findAllForExport({ query }) {
+    const { cpfPattern, namePattern } = this._searchPatterns(query ?? '')
+    const rows = this.findAllForExportStmt.all(query ?? '', cpfPattern, namePattern)
+    return rows.map((row) => this._mapRow(row))
   }
 
   async update(id, { name, cpf }) {

@@ -1071,3 +1071,47 @@ body {
     padding-top: 0;
   }
 }
+
+/* Dark mode — tokens customizados alinhados ao tema Vuetify */
+.v-theme--dark {
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-text: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-text-light: #64748b;
+  --color-border: #334155;
+  --color-primary-soft: rgba(91, 143, 212, 0.16);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
+}
+
+.v-theme--dark .app-shell,
+.v-theme--dark .app-main {
+  background: var(--color-bg);
+}
+
+.v-theme--dark .app-header__avatar,
+.v-theme--dark .quick-card,
+.v-theme--dark .ui-card {
+  background: var(--color-surface);
+}
+
+.v-theme--dark .quick-card:hover {
+  border-color: #475569;
+}
+
+.v-theme--dark .table-actions__btn--danger:hover {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.v-theme--dark .app-header__title,
+.v-theme--dark .section-title,
+.v-theme--dark .list-header__title {
+  color: var(--color-text);
+}
+
+.v-theme--dark .app-header__subtitle,
+.v-theme--dark .section-subtitle,
+.v-theme--dark .list-header__subtitle {
+  color: var(--color-text-muted);
+}

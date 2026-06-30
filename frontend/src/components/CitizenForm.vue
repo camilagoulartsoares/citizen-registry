@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useCitizen, resolveApiError } from '@/composables/useCitizen'
+import { useCitizen } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
 
 const {
@@ -14,7 +14,6 @@ const name = ref('')
 const cpf = ref('')
 const createdCitizen = ref(null)
 const copySuccess = ref(false)
-const formError = ref(null)
 
 const isNameValid = computed(() => name.value.trim().length >= 3)
 const isCpfValid = computed(() => isValid(cpf.value))
@@ -32,23 +31,20 @@ const showCpfValid = computed(() => isCpfValid.value)
 
 function onCpfInput(value) {
   cpf.value = mask(value)
-  formError.value = null
   clearError()
 }
 
 function onNameInput() {
-  formError.value = null
   clearError()
 }
 
 async function handleSubmit() {
   if (!isFormValid.value) return
 
-  formError.value = null
   try {
     createdCitizen.value = await createCitizen(name.value, cpf.value)
-  } catch (err) {
-    formError.value = resolveApiError(err, 'Erro ao cadastrar cidadão.')
+  } catch {
+    // feedback via snackbar global
   }
 }
 
@@ -69,7 +65,6 @@ function resetForm() {
   name.value = ''
   cpf.value = ''
   createdCitizen.value = null
-  formError.value = null
   clearError()
 }
 </script>
@@ -155,18 +150,6 @@ function resetForm() {
           </div>
         </div>
       </div>
-
-      <v-alert
-        v-if="formError"
-        type="error"
-        variant="tonal"
-        density="compact"
-        class="mb-4"
-        closable
-        @click:close="formError = null"
-      >
-        {{ formError }}
-      </v-alert>
 
       <v-btn
         type="submit"

@@ -7,6 +7,7 @@ import * as directives from 'vuetify/directives'
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 import '@/assets/styles/main.css'
+import { loadSavedTheme } from '@/composables/useAppTheme'
 
 const vuetify = createVuetify({
   components,
@@ -22,6 +23,16 @@ const vuetify = createVuetify({
           error: '#DC2626',
           background: '#F8F9FA',
           surface: '#FFFFFF',
+        },
+      },
+      dark: {
+        colors: {
+          primary: '#5B8FD4',
+          secondary: '#8DC63F',
+          success: '#8DC63F',
+          error: '#F87171',
+          background: '#0F172A',
+          surface: '#1E293B',
         },
       },
     },
@@ -40,6 +51,8 @@ const vuetify = createVuetify({
     },
   },
 })
+
+loadSavedTheme(vuetify.theme)
 
 const app = createApp(App)
 

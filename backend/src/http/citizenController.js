@@ -9,6 +9,8 @@ const ListCitizens = require('../application/ListCitizens')
 const { GetCitizen } = require('../application/GetCitizen')
 const UpdateCitizen = require('../application/UpdateCitizen')
 const DeleteCitizen = require('../application/DeleteCitizen')
+const ExportCitizens = require('../application/ExportCitizens')
+const { citizensToCsv } = require('../infrastructure/csvExport')
 const { CitizenNotFoundError } = require('../application/GetCitizen')
 
 /**
@@ -77,6 +79,20 @@ class CitizenController {
       next(error)
     }
   }
+
+  async exportCsv(req, res, next) {
+    try {
+      const citizens = await this.exportCitizens.execute({ query: req.query.query })
+      const csv = `\uFEFF${citizensToCsv(citizens)}`
+      const filename = `cidadaos_${new Date().toISOString().slice(0, 10)}.csv`
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+      res.send(csv)
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
 function createCitizenController(repository) {
@@ -87,6 +103,7 @@ function createCitizenController(repository) {
     getCitizen: new GetCitizen(repository),
     updateCitizen: new UpdateCitizen(repository),
     deleteCitizen: new DeleteCitizen(repository),
+    exportCitizens: new ExportCitizens(repository),
   })
 }
 

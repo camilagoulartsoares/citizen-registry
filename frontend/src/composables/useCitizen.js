@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { citizenApi } from '@/services/api'
 import { useCpfMask } from '@/composables/useCpfMask'
+import { useSnackbar } from '@/composables/useSnackbar'
 
 export function resolveApiError(err, fallback) {
   const status = err.response?.status
@@ -30,6 +31,12 @@ export function useCitizen() {
   const loading = ref(false)
   const error = ref(null)
   const { unmask, format } = useCpfMask()
+  const { showSuccess, showError } = useSnackbar()
+
+  function notifyError(message) {
+    error.value = message
+    showError(message)
+  }
 
   function normalizeCitizen(raw) {
     if (!raw) return null
@@ -84,7 +91,7 @@ export function useCitizen() {
       })
       return normalizeCitizen(extractCitizens(response)[0] ?? response.data)
     } catch (err) {
-      error.value = resolveApiError(err, 'Erro ao cadastrar cidadão.')
+      notifyError(resolveApiError(err, 'Erro ao cadastrar cidadão.'))
       throw err
     } finally {
       loading.value = false
@@ -98,12 +105,12 @@ export function useCitizen() {
       const response = await citizenApi.search(query.trim())
       const citizens = extractCitizens(response).map(normalizeCitizen)
       if (citizens.length === 0) {
-        error.value = 'Cidadão não encontrado.'
+        notifyError('Cidadão não encontrado.')
         return null
       }
       return citizens[0]
     } catch (err) {
-      error.value = resolveApiError(err, 'Erro ao buscar cidadão.')
+      notifyError(resolveApiError(err, 'Erro ao buscar cidadão.'))
       throw err
     } finally {
       loading.value = false
@@ -120,7 +127,7 @@ export function useCitizen() {
         pagination: extractPagination(response),
       }
     } catch (err) {
-      error.value = resolveApiError(err, 'Erro ao carregar lista de cidadãos.')
+      notifyError(resolveApiError(err, 'Erro ao carregar lista de cidadãos.'))
       throw err
     } finally {
       loading.value = false
@@ -134,7 +141,7 @@ export function useCitizen() {
       const response = await citizenApi.getById(id)
       return normalizeCitizen(response.data)
     } catch (err) {
-      error.value = resolveApiError(err, 'Erro ao carregar cidadão.')
+      notifyError(resolveApiError(err, 'Erro ao carregar cidadão.'))
       throw err
     } finally {
       loading.value = false
@@ -151,7 +158,7 @@ export function useCitizen() {
       })
       return normalizeCitizen(response.data)
     } catch (err) {
-      error.value = resolveApiError(err, 'Erro ao atualizar cidadão.')
+      notifyError(resolveApiError(err, 'Erro ao atualizar cidadão.'))
       throw err
     } finally {
       loading.value = false
@@ -164,7 +171,38 @@ export function useCitizen() {
     try {
       await citizenApi.remove(id)
     } catch (err) {
-      error.value = resolveApiError(err, 'Erro ao remover cidadão.')
+      notifyError(resolveApiError(err, 'Erro ao remover cidadão.'))
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function downloadCitizensCsv(query = '') {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await citizenApi.exportCsv(query.trim())
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      const date = new Date().toISOString().slice(0, 10)
+      link.href = url
+      link.download = `cidadaos_${date}.csv`
+      link.click()
+      URL.revokeObjectURL(url)
+      showSuccess('Arquivo CSV baixado com sucesso.')
+    } catch (err) {
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text()
+          const json = JSON.parse(text)
+          err.userMessage = json.message || json.error
+        } catch {
+          // mantém mensagem padrão
+        }
+      }
+      notifyError(resolveApiError(err, 'Erro ao baixar arquivo CSV.'))
       throw err
     } finally {
       loading.value = false
@@ -181,6 +219,7 @@ export function useCitizen() {
     getCitizen,
     updateCitizen,
     deleteCitizen,
+    downloadCitizensCsv,
     normalizeCitizen,
   }
 }

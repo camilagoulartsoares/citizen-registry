@@ -45,11 +45,20 @@ function formatDate(dateStr) {
     :items="tableItems"
     :loading="loading"
     :items-per-page="-1"
+    loading-text=""
     hide-default-footer
     class="citizen-table"
   >
     <template #loading>
-      <v-skeleton-loader type="table-row@5" />
+      <div class="citizen-table__skeleton">
+        <v-skeleton-loader type="table-heading" class="mb-2" />
+        <v-skeleton-loader
+          v-for="n in 8"
+          :key="n"
+          type="table-row"
+          class="citizen-table__skeleton-row"
+        />
+      </div>
     </template>
 
     <template #item.name="{ item }">
@@ -127,7 +136,7 @@ function formatDate(dateStr) {
   width: 36px;
   height: 36px;
   border: 1px solid var(--color-border);
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 8px;
   cursor: pointer;
   display: inline-flex;
@@ -137,8 +146,8 @@ function formatDate(dateStr) {
 }
 
 .table-actions__btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: var(--color-bg);
+  border-color: var(--color-border);
 }
 
 .table-actions__btn--danger:hover {
@@ -156,5 +165,17 @@ function formatDate(dateStr) {
   font-size: 14px;
   padding-top: 14px !important;
   padding-bottom: 14px !important;
+}
+
+.citizen-table__skeleton {
+  padding: 8px 16px 16px;
+}
+
+.citizen-table__skeleton-row {
+  margin-bottom: 4px;
+}
+
+:deep(.v-data-table__loading) {
+  display: none;
 }
 </style>
