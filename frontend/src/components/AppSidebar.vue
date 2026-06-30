@@ -22,9 +22,9 @@ function isActive(key) {
 <template>
   <aside class="app-sidebar">
     <div class="sidebar-brand">
-      <v-icon class="sidebar-brand__icon" size="28" color="white">
-        mdi-account-group-outline
-      </v-icon>
+      <div class="sidebar-brand__icon-wrap">
+        <v-icon size="22" color="white">mdi-account-outline</v-icon>
+      </div>
       <h1 class="sidebar-brand__title">Cadastro CPF</h1>
       <p class="sidebar-brand__subtitle">
         Sistema de cadastro e consulta de cidadãos
@@ -46,16 +46,20 @@ function isActive(key) {
 
     <div class="sidebar-bottom">
       <div class="sidebar-decoration">
+        <div class="sidebar-decoration__glow sidebar-decoration__glow--outer" aria-hidden="true" />
+        <div class="sidebar-decoration__glow" aria-hidden="true" />
         <SidebarCityArt />
       </div>
 
+      <div class="sidebar-divider" role="separator" />
+
       <div class="sidebar-footer">
         <div class="sidebar-footer__item">
-          <v-icon size="18" color="rgba(255,255,255,0.85)">mdi-bank-outline</v-icon>
+          <v-icon size="17" color="white">mdi-bank-outline</v-icon>
           <span>Prefeitura Municipal</span>
         </div>
         <div class="sidebar-footer__item">
-          <v-icon size="18" color="rgba(255,255,255,0.85)">mdi-shield-check-outline</v-icon>
+          <v-icon size="17" color="white">mdi-shield-check-outline</v-icon>
           <span>Ambiente Seguro</span>
         </div>
       </div>
