@@ -39,6 +39,12 @@ describe('RegisterCitizen', () => {
     ).rejects.toThrow(InvalidNameError)
   })
 
+  it('rejeita nome apenas com números', async () => {
+    await expect(
+      registerCitizen.execute({ name: '123', cpf: '52998224725' }),
+    ).rejects.toThrow(InvalidNameError)
+  })
+
   it('rejeita CPF inválido', async () => {
     await expect(
       registerCitizen.execute({ name: 'Maria Silva', cpf: '111.111.111-11' }),

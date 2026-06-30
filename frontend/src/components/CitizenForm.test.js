@@ -36,7 +36,17 @@ describe('CitizenForm', () => {
     await nameInput.setValue('Ab')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Nome deve ter no mínimo 3 caracteres.')
+    expect(wrapper.text()).toContain('Nome deve ter no mínimo 3 caracteres e conter letras.')
+  })
+
+  it('exibe erro quando nome contém apenas números', async () => {
+    const wrapper = mountForm()
+
+    const nameInput = wrapper.find('input[placeholder="Digite o nome completo"]')
+    await nameInput.setValue('123')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Nome deve ter no mínimo 3 caracteres e conter letras.')
   })
 
   it('mantém botão de cadastro desabilitado com nome inválido', async () => {

@@ -16,8 +16,8 @@ export function resolveApiError(err, fallback) {
     return 'Este CPF já está cadastrado no sistema.'
   }
 
-  if (lower.includes('mínimo 3') || lower.includes('minimo 3') || lower.includes('nome deve')) {
-    return 'Nome deve ter no mínimo 3 caracteres.'
+  if (lower.includes('mínimo 3') || lower.includes('minimo 3') || lower.includes('nome deve') || lower.includes('conter letras')) {
+    return 'Nome deve ter no mínimo 3 caracteres e conter letras.'
   }
 
   if (lower.includes('cpf inválido') || lower.includes('cpf invalido')) {

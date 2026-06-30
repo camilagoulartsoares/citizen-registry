@@ -7,7 +7,7 @@ test.describe('Cadastro de cidadão', () => {
     await page.getByRole('textbox', { name: 'Digite o nome completo', exact: true }).fill('Ab')
 
     await expect(
-      page.getByText('Nome deve ter no mínimo 3 caracteres.'),
+      page.getByText('Nome deve ter no mínimo 3 caracteres e conter letras.'),
     ).toBeVisible()
 
     await expect(

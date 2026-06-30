@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue'
 import { useCitizen } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
+import { useCpfAvailability } from '@/composables/useCpfAvailability'
+import { isValidName, NAME_VALIDATION_MESSAGE } from '@/composables/useNameValidation'
 
 const {
   loading,
@@ -9,29 +11,43 @@ const {
   createCitizen,
 } = useCitizen()
 const { mask, unmask, isValid } = useCpfMask()
+const {
+  isRegistered: cpfRegistered,
+  checking: cpfChecking,
+  scheduleCheck,
+  reset: resetCpfCheck,
+  markRegistered: markCpfRegistered,
+} = useCpfAvailability()
 
 const name = ref('')
 const cpf = ref('')
 const createdCitizen = ref(null)
 const copySuccess = ref(false)
 
-const isNameValid = computed(() => name.value.trim().length >= 3)
+const isNameValid = computed(() => isValidName(name.value))
 const isCpfValid = computed(() => isValid(cpf.value))
-const isFormValid = computed(() => isNameValid.value && isCpfValid.value)
+const isFormValid = computed(
+  () => isNameValid.value && isCpfValid.value && !cpfRegistered.value && !cpfChecking.value,
+)
 
 const showNameInvalid = computed(() => {
-  const length = name.value.trim().length
-  return length > 0 && length < 3
+  const trimmed = name.value.trim()
+  return trimmed.length > 0 && !isValidName(name.value)
 })
 
 const cpfDigits = computed(() => unmask(cpf.value))
 const showCpfStatus = computed(() => cpfDigits.value.length > 0)
 const showCpfInvalid = computed(() => showCpfStatus.value && !isCpfValid.value)
-const showCpfValid = computed(() => isCpfValid.value)
+const showCpfDuplicate = computed(() => isCpfValid.value && cpfRegistered.value)
+const showCpfValid = computed(
+  () => isCpfValid.value && !cpfRegistered.value && !cpfChecking.value,
+)
 
 function onCpfInput(value) {
   cpf.value = mask(value)
   clearError()
+  resetCpfCheck()
+  scheduleCheck(cpf.value)
 }
 
 function onNameInput() {
@@ -43,8 +59,10 @@ async function handleSubmit() {
 
   try {
     createdCitizen.value = await createCitizen(name.value, cpf.value)
-  } catch {
-    // feedback via snackbar global
+  } catch (err) {
+    if (err?.response?.status === 409) {
+      markCpfRegistered()
+    }
   }
 }
 
@@ -65,6 +83,7 @@ function resetForm() {
   name.value = ''
   cpf.value = ''
   createdCitizen.value = null
+  resetCpfCheck()
   clearError()
 }
 </script>
@@ -117,7 +136,7 @@ function resetForm() {
         />
         <div v-if="showNameInvalid" class="field-hint field-hint--error mt-2">
           <v-icon color="error" size="18">mdi-close-circle-outline</v-icon>
-          <span>Nome deve ter no mínimo 3 caracteres.</span>
+          <span>{{ NAME_VALIDATION_MESSAGE }}</span>
         </div>
       </div>
 
@@ -142,6 +161,18 @@ function resetForm() {
           <div v-if="showCpfInvalid" class="cpf-row__status">
             <v-icon color="error" size="20">mdi-close-circle-outline</v-icon>
             <span class="cpf-row__status-text cpf-row__status-text--error">CPF inválido</span>
+          </div>
+
+          <div v-else-if="showCpfDuplicate" class="cpf-row__status">
+            <v-icon color="error" size="20">mdi-close-circle-outline</v-icon>
+            <span class="cpf-row__status-text cpf-row__status-text--error">
+              Este CPF já está cadastrado no sistema.
+            </span>
+          </div>
+
+          <div v-else-if="cpfChecking" class="cpf-row__status">
+            <v-progress-circular indeterminate size="18" width="2" color="primary" />
+            <span class="cpf-row__status-text">Verificando CPF...</span>
           </div>
 
           <div v-else-if="showCpfValid" class="cpf-row__status">

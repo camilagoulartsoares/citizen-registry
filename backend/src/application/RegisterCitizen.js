@@ -1,5 +1,6 @@
 const Citizen = require('../domain/Citizen')
 const CpfValidator = require('../domain/CpfValidator')
+const NameValidator = require('../domain/NameValidator')
 
 class DuplicateCpfError extends Error {
   constructor() {
@@ -19,7 +20,7 @@ class InvalidCpfError extends Error {
 
 class InvalidNameError extends Error {
   constructor() {
-    super('Nome deve ter no mínimo 3 caracteres')
+    super('Nome deve ter no mínimo 3 caracteres e conter letras.')
     this.name = 'InvalidNameError'
     this.statusCode = 400
   }
@@ -34,7 +35,7 @@ class RegisterCitizen {
     const trimmedName = String(name ?? '').trim()
     const sanitizedCpf = CpfValidator.sanitize(cpf)
 
-    if (trimmedName.length < 3) {
+    if (!NameValidator.isValid(trimmedName)) {
       throw new InvalidNameError()
     }
 

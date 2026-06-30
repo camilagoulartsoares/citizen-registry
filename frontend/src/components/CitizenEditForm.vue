@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { useCpfMask } from '@/composables/useCpfMask'
+import { useCpfAvailability } from '@/composables/useCpfAvailability'
+import { isValidName, NAME_VALIDATION_MESSAGE } from '@/composables/useNameValidation'
 
 const props = defineProps({
   citizen: { type: Object, default: null },
@@ -10,6 +12,12 @@ const props = defineProps({
 const emit = defineEmits(['save'])
 
 const { mask, unmask, isValid } = useCpfMask()
+const {
+  isRegistered: cpfRegistered,
+  checking: cpfChecking,
+  scheduleCheck,
+  reset: resetCpfCheck,
+} = useCpfAvailability(() => props.citizen?.cpf ?? null)
 
 const name = ref('')
 const cpf = ref('')
@@ -20,25 +28,32 @@ watch(
     if (citizen) {
       name.value = citizen.name
       cpf.value = mask(citizen.cpf)
+      resetCpfCheck()
     }
   },
   { immediate: true },
 )
 
 const showNameInvalid = computed(() => {
-  const length = name.value.trim().length
-  return length > 0 && length < 3
+  const trimmed = name.value.trim()
+  return trimmed.length > 0 && !isValidName(name.value)
 })
 
 const cpfDigits = computed(() => unmask(cpf.value))
 const showCpfStatus = computed(() => cpfDigits.value.length > 0)
 const showCpfInvalid = computed(() => showCpfStatus.value && !isValid(cpf.value))
-const showCpfValid = computed(() => isValid(cpf.value))
+const showCpfDuplicate = computed(() => isValid(cpf.value) && cpfRegistered.value)
+const showCpfValid = computed(
+  () => isValid(cpf.value) && !cpfRegistered.value && !cpfChecking.value,
+)
 
-const isFormValid = () => name.value.trim().length >= 3 && isValid(cpf.value)
+const isFormValid = () =>
+  isValidName(name.value) && isValid(cpf.value) && !cpfRegistered.value && !cpfChecking.value
 
 function onCpfInput(value) {
   cpf.value = mask(value)
+  resetCpfCheck()
+  scheduleCheck(cpf.value)
 }
 
 function handleSave() {
@@ -63,7 +78,7 @@ defineExpose({ submit: handleSave })
       />
       <div v-if="showNameInvalid" class="field-hint field-hint--error mt-2">
         <v-icon color="error" size="18">mdi-close-circle-outline</v-icon>
-        <span>Nome deve ter no mínimo 3 caracteres.</span>
+        <span>{{ NAME_VALIDATION_MESSAGE }}</span>
       </div>
     </div>
 
@@ -85,6 +100,16 @@ defineExpose({ submit: handleSave })
         <div v-if="showCpfInvalid" class="cpf-row__status">
           <v-icon color="error" size="20">mdi-close-circle-outline</v-icon>
           <span class="cpf-row__status-text cpf-row__status-text--error">CPF inválido</span>
+        </div>
+        <div v-else-if="showCpfDuplicate" class="cpf-row__status">
+          <v-icon color="error" size="20">mdi-close-circle-outline</v-icon>
+          <span class="cpf-row__status-text cpf-row__status-text--error">
+            Este CPF já está cadastrado no sistema.
+          </span>
+        </div>
+        <div v-else-if="cpfChecking" class="cpf-row__status">
+          <v-progress-circular indeterminate size="18" width="2" color="primary" />
+          <span class="cpf-row__status-text">Verificando CPF...</span>
         </div>
         <div v-else-if="showCpfValid" class="cpf-row__status">
           <v-icon color="success" size="20">mdi-check-circle-outline</v-icon>

@@ -1,5 +1,6 @@
 const Citizen = require('../domain/Citizen')
 const CpfValidator = require('../domain/CpfValidator')
+const NameValidator = require('../domain/NameValidator')
 const { CitizenNotFoundError } = require('./GetCitizen')
 const {
   DuplicateCpfError,
@@ -21,7 +22,7 @@ class UpdateCitizen {
     const trimmedName = String(name ?? '').trim()
     const sanitizedCpf = CpfValidator.sanitize(cpf)
 
-    if (trimmedName.length < 3) {
+    if (!NameValidator.isValid(trimmedName)) {
       throw new InvalidNameError()
     }
 

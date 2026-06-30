@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { useCpfMask } from '@/composables/useCpfMask'
+import { useCpfAvailability } from '@/composables/useCpfAvailability'
+import { isValidName, NAME_VALIDATION_MESSAGE } from '@/composables/useNameValidation'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -13,6 +15,12 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'save', 'clear-error'])
 
 const { mask, unmask, isValid } = useCpfMask()
+const {
+  isRegistered: cpfRegistered,
+  checking: cpfChecking,
+  scheduleCheck,
+  reset: resetCpfCheck,
+} = useCpfAvailability(() => props.citizen?.cpf ?? null)
 
 const name = ref('')
 const cpf = ref('')
@@ -23,6 +31,7 @@ watch(
     if (citizen) {
       name.value = citizen.name
       cpf.value = mask(citizen.cpf)
+      resetCpfCheck()
     }
   },
   { immediate: true },
@@ -34,6 +43,7 @@ watch(
     if (open && props.citizen) {
       name.value = props.citizen.name
       cpf.value = mask(props.citizen.cpf)
+      resetCpfCheck()
     }
   },
 )
@@ -43,13 +53,16 @@ watch([name, cpf], () => {
 })
 
 const showNameInvalid = computed(() => {
-  const length = name.value.trim().length
-  return length > 0 && length < 3
+  const trimmed = name.value.trim()
+  return trimmed.length > 0 && !isValidName(name.value)
 })
 
 const cpfDigits = computed(() => unmask(cpf.value))
 const showCpfInvalid = computed(() => cpfDigits.value.length > 0 && !isValid(cpf.value))
-const showCpfValid = computed(() => isValid(cpf.value))
+const showCpfDuplicate = computed(() => isValid(cpf.value) && cpfRegistered.value)
+const showCpfValid = computed(
+  () => isValid(cpf.value) && !cpfRegistered.value && !cpfChecking.value,
+)
 
 function close() {
   emit('update:modelValue', false)
@@ -57,10 +70,14 @@ function close() {
 
 function onCpfInput(value) {
   cpf.value = mask(value)
+  resetCpfCheck()
+  scheduleCheck(cpf.value)
 }
 
 function submit() {
-  if (name.value.trim().length < 3 || !isValid(cpf.value)) return
+  if (!isValidName(name.value) || !isValid(cpf.value) || cpfRegistered.value || cpfChecking.value) {
+    return
+  }
   emit('save', { name: name.value, cpf: cpf.value })
 }
 </script>
@@ -120,7 +137,7 @@ function submit() {
             />
             <div v-if="showNameInvalid" class="app-modal__field-hint app-modal__field-hint--error">
               <v-icon size="18">mdi-close-circle-outline</v-icon>
-              <span>Nome deve ter no mínimo 3 caracteres.</span>
+              <span>{{ NAME_VALIDATION_MESSAGE }}</span>
             </div>
           </div>
 
@@ -142,6 +159,14 @@ function submit() {
             <div v-if="showCpfInvalid" class="app-modal__field-hint app-modal__field-hint--error">
               <v-icon size="18">mdi-close-circle-outline</v-icon>
               <span>CPF inválido</span>
+            </div>
+            <div v-else-if="showCpfDuplicate" class="app-modal__field-hint app-modal__field-hint--error">
+              <v-icon size="18">mdi-close-circle-outline</v-icon>
+              <span>Este CPF já está cadastrado no sistema.</span>
+            </div>
+            <div v-else-if="cpfChecking" class="app-modal__field-hint">
+              <v-progress-circular indeterminate size="16" width="2" color="primary" />
+              <span>Verificando CPF...</span>
             </div>
             <div v-else-if="showCpfValid" class="app-modal__field-hint app-modal__field-hint--success">
               <v-icon size="18">mdi-check-circle-outline</v-icon>

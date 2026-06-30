@@ -34,11 +34,11 @@ O arquivo `vercel.json` na raiz do repositório já configura build em `frontend
 |---|---|
 | **Swagger UI** | Documentação interativa da API em `/api-docs` — teste endpoints pelo navegador |
 | **Clean Architecture** | Backend em camadas: Domain → Application → Infrastructure → HTTP |
-| **72 testes** | 56 Jest + 13 Vitest + 3 Playwright E2E + GitHub Actions CI |
+| **77 testes** | 60 Jest + 14 Vitest + 3 Playwright E2E + GitHub Actions CI |
 | **CRUD completo** | Cadastrar, listar, buscar, editar, remover cidadãos |
 | **Exportação CSV** | `GET /citizens/export` + download na interface |
 | **Rate limiting** | Proteção básica para produção (100 req/IP / 15 min) |
-| **UX moderna** | Dark mode, snackbar global, skeleton loader, página 404 |
+| **Validação de formulário** | Nome com letras (mín. 3 caracteres); CPF com dígitos verificadores; verificação de CPF já cadastrado em tempo real |
 
 ### Links rápidos (desenvolvimento local)
 
@@ -101,6 +101,7 @@ citizen-registry-system/
 │   │   ├── domain/                 # Regras de negócio puras (sem Express/SQLite)
 │   │   │   ├── Citizen.js          # Entidade cidadão
 │   │   │   ├── CpfValidator.js     # Validação de CPF
+│   │   │   ├── NameValidator.js    # Validação de nome (letras + mínimo 3 caracteres)
 │   │   │   └── CitizenRepository.js# Contrato do repositório
 │   │   │
 │   │   ├── application/            # Casos de uso (uma classe por operação)
@@ -126,10 +127,11 @@ citizen-registry-system/
 │   │           ├── rateLimit.js    # express-rate-limit
 │   │           └── errorHandler.js
 │   │
-│   ├── tests/                      # 55 testes Jest (unitários + integração supertest)
+│   ├── tests/                      # 60 testes Jest (unitários + integração supertest)
 │   │   ├── http/                   # Integração supertest
 │   │   ├── helpers/                # App de teste + fixtures
 │   │   ├── CpfValidator.test.js
+│   │   ├── NameValidator.test.js
 │   │   ├── RegisterCitizen.test.js
 │   │   ├── UpdateCitizen.test.js
 │   │   ├── DeleteCitizen.test.js
@@ -143,7 +145,7 @@ citizen-registry-system/
 │   ├── src/
 │   │   ├── views/                  # Home, Cadastrar, Consultar, Lista, 404
 │   │   ├── components/             # Tabela, modais, formulários, snackbar
-│   │   ├── composables/            # useCitizen, useCpfMask, useSnackbar, useAppTheme
+│   │   ├── composables/            # useCitizen, useCpfMask, useCpfAvailability, useNameValidation, useSnackbar, useAppTheme
 │   │   ├── services/api.js         # Cliente Axios (/api → proxy Vite)
 │   │   ├── router/index.js
 │   │   ├── test/setup.js           # Setup Vitest + Vuetify
@@ -290,7 +292,7 @@ npm run test:watch
 | Arquivo | O que testa |
 |---------|-------------|
 | `src/composables/useCpfMask.test.js` | `unmask`, `mask`, `isValid` |
-| `src/components/CitizenForm.test.js` | Erro quando nome tem menos de 3 caracteres |
+| `src/components/CitizenForm.test.js` | Nome curto, nome só com números e botão desabilitado |
 | `src/composables/useCitizen.test.js` | Tratamento de CPF duplicado (API mockada) |
 
 ### Build de produção (frontend)
@@ -335,13 +337,13 @@ Backend:  GET http://localhost:3000/citizens?page=1&limit=10
 | **Swagger / OpenAPI 3.0** | Documentação interativa em `/api-docs` (swagger-jsdoc + swagger-ui-express) |
 | **Rate limiting** | 100 req/IP a cada 15 min (express-rate-limit), desligado em testes |
 | **Clean Architecture** | Domain → Application → Infrastructure → HTTP |
-| **Testes** | 55 testes Jest (unitários, repositório `:memory:`, integração supertest) |
+| **Testes** | 60 testes Jest (unitários, repositório `:memory:`, integração supertest) |
 
 ### Frontend
 
 | Funcionalidade | Detalhes |
 |----------------|----------|
-| **Cadastro e consulta** | Formulários com máscara de CPF e validação em tempo real |
+| **Cadastro e consulta** | Formulários com máscara de CPF, validação em tempo real e verificação de CPF duplicado antes do envio |
 | **Lista paginada** | Tabela com busca (debounce 400ms), visualizar, editar e excluir |
 | **Modais** | Fluxo de atenção → confirmação → sucesso na exclusão; edição e detalhes |
 | **Download CSV** | Atalho na home e botão na lista (respeita filtro de busca) |
@@ -459,7 +461,7 @@ Proteção básica para produção com **express-rate-limit**:
 
 | Erro | HTTP | Mensagem |
 |------|------|----------|
-| `InvalidNameError` | 400 | Nome deve ter no mínimo 3 caracteres |
+| `InvalidNameError` | 400 | Nome deve ter no mínimo 3 caracteres e conter letras. |
 | `InvalidCpfError` | 400 | CPF inválido |
 | `DuplicateCpfError` | 409 | CPF já cadastrado |
 | `CitizenNotFoundError` | 404 | Cidadão não encontrado |
@@ -495,6 +497,7 @@ Infrastructure (SQLiteRepository — implementa a interface)
 |---------|-----------|
 | `Citizen.js` | Entidade com `id`, `name`, `cpf`, `createdAt` |
 | `CpfValidator.js` | Sanitização e validação por dígitos verificadores da Receita Federal |
+| `NameValidator.js` | Validação de nome: mínimo 3 caracteres e pelo menos uma letra |
 | `CitizenRepository.js` | Interface/contrato do repositório |
 
 #### Application — Casos de uso
@@ -572,7 +575,7 @@ Backend API (/api → proxy Vite)
 
 **Início** — boas-vindas e cards de acesso rápido.
 
-**Cadastrar cidadão** — formulário com nome e CPF, máscara em tempo real, validação e feedback de erro.
+**Cadastrar cidadão** — formulário com nome e CPF, máscara em tempo real, validação de nome (letras obrigatórias), dígitos verificadores do CPF e alerta imediato se o CPF já estiver cadastrado.
 
 **Consultar CPF** — busca por nome ou CPF, exibe card com dados do cidadão.
 
@@ -600,6 +603,10 @@ Backend API (/api → proxy Vite)
 #### Composables
 
 **`useCpfMask.js`** — `unmask`, `mask`, `format`, `looksLikeCpf`, `isValid` (dígitos verificadores).
+
+**`useNameValidation.js`** — `isValidName` e mensagem padrão; rejeita nomes só com números.
+
+**`useCpfAvailability.js`** — consulta a API (debounce 400ms) para detectar CPF já cadastrado enquanto o usuário digita.
 
 **`useCitizen.js`** — `loading`, `error`, `createCitizen`, `searchCitizen`, `listCitizens`, `getCitizen`, `updateCitizen`, `deleteCitizen`, `downloadCitizensCsv`, `normalizeCitizen` e mensagens de erro em português.
 
@@ -675,10 +682,17 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 - Rejeita todos os dígitos iguais
 - Rejeita tamanho incorreto
 
+### `tests/NameValidator.test.js`
+
+- Aceita nomes com letras e no mínimo 3 caracteres
+- Rejeita nomes com menos de 3 caracteres
+- Rejeita nomes apenas com números
+
 ### `tests/RegisterCitizen.test.js`
 
 - Cadastra cidadão com dados válidos
 - Rejeita nome com menos de 3 caracteres
+- Rejeita nome apenas com números
 - Rejeita CPF inválido
 - Rejeita CPF duplicado
 
@@ -711,14 +725,14 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 - App Express real com SQLite em memória (`createTestApp`)
 - Valida status HTTP e corpo das respostas de ponta a ponta
 
-**Total: 56 testes (backend).**
+**Total: 60 testes (backend).**
 
 ### Testes E2E (Playwright)
 
 | Arquivo | Cobertura |
 |---------|-----------|
 | `e2e/home.spec.js` | Página inicial, acesso rápido, navegação pela sidebar |
-| `e2e/cadastro.spec.js` | Validação de nome curto no formulário |
+| `e2e/cadastro.spec.js` | Validação de nome inválido (curto ou só números) no formulário |
 
 ```bash
 VITE_API_URL=http://127.0.0.1:3001 npm run build --prefix frontend
@@ -744,10 +758,10 @@ Workflow `.github/workflows/ci.yml` — em todo `push`/`pull_request` na `main`:
 | Arquivo | Cobertura |
 |---------|-----------|
 | `useCpfMask.test.js` | `unmask`, `mask`, `isValid` |
-| `CitizenForm.test.js` | Validação visual de nome curto e botão desabilitado |
+| `CitizenForm.test.js` | Nome curto, nome só com números e botão desabilitado |
 | `useCitizen.test.js` | `resolveApiError` e `createCitizen` com CPF duplicado (API mockada) |
 
-**Total: 13 testes (Vitest).** `npm run test:all` = **72 testes** no total.
+**Total: 14 testes (Vitest).** `npm run test:all` = **77 testes** no total.
 
 ### Teste manual da API (com servidor rodando)
 
