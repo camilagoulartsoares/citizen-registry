@@ -4,6 +4,20 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 
 ---
 
+## Demo (produção)
+
+| Recurso | URL |
+|---------|-----|
+| **Aplicação web** | https://citizen-registry-system.vercel.app |
+| **API (Render)** | https://citizen-registry-system-backend.onrender.com |
+| **Swagger UI** | https://citizen-registry-system-backend.onrender.com/api-docs |
+| **OpenAPI JSON** | https://citizen-registry-system-backend.onrender.com/api-docs.json |
+| **Health check** | https://citizen-registry-system-backend.onrender.com/health |
+
+> No plano free do Render, a primeira requisição após inatividade pode levar ~50s para responder.
+
+---
+
 ## Destaques do projeto
 
 | | |
@@ -16,7 +30,7 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 | **Rate limiting** | Proteção básica para produção (100 req/IP / 15 min) |
 | **UX moderna** | Dark mode, snackbar global, skeleton loader, página 404 |
 
-### Links rápidos (com o projeto rodando)
+### Links rápidos (desenvolvimento local)
 
 | Recurso | URL |
 |---------|-----|
@@ -156,10 +170,11 @@ SQLite (data/citizens.sqlite)
 
 **Não precisa de outro projeto** — o mesmo repositório, dois deploys:
 
-| Parte | Plataforma | Pasta |
-|-------|------------|-------|
-| Frontend | Vercel ou Netlify | `frontend/` → `dist/` |
-| Backend | Render ou Railway | `backend/` (Node + SQLite) |
+| Parte | Plataforma | URL / pasta |
+|-------|------------|-------------|
+| Frontend | [Vercel](https://citizen-registry-system.vercel.app) | `frontend/` → https://citizen-registry-system.vercel.app |
+| Backend | [Render](https://citizen-registry-system-backend.onrender.com) | `backend/` → https://citizen-registry-system-backend.onrender.com |
+| Swagger | Render | https://citizen-registry-system-backend.onrender.com/api-docs |
 
 Guia completo passo a passo: **[docs/DEPLOY.md](docs/DEPLOY.md)**
 
