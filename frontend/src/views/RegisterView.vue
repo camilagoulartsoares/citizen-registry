@@ -1,9 +1,15 @@
 <script setup>
+import { usePageReady } from '@/composables/usePageReady'
 import CitizenForm from '@/components/CitizenForm.vue'
+import SkeletonRegisterCard from '@/components/skeleton/SkeletonRegisterCard.vue'
+
+const { isPageReady } = usePageReady()
 </script>
 
 <template>
-  <div class="ui-card" style="max-width: 560px">
+  <SkeletonRegisterCard v-if="!isPageReady" variant="page" />
+
+  <div v-else class="ui-card page-skeleton__narrow-card">
     <div class="ui-card__header">
       <div class="ui-card__header-left">
         <div class="ui-card__icon-wrap">

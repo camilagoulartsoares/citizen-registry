@@ -916,6 +916,252 @@ body {
   border-radius: 50%;
 }
 
+.page-skeleton__narrow-card {
+  max-width: 560px;
+}
+
+.page-skeleton__header-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-skeleton__dots {
+  display: grid;
+  grid-template-columns: repeat(3, 4px);
+  gap: 4px;
+  opacity: 1;
+  padding-top: 6px;
+}
+
+.page-skeleton__dots .skeleton-shimmer--dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+.page-skeleton__form {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.page-skeleton__field {
+  margin-bottom: 20px;
+}
+
+.page-skeleton__field:last-of-type {
+  margin-bottom: 24px;
+}
+
+.page-skeleton__field--search {
+  margin-bottom: 24px;
+}
+
+.page-skeleton__form .skeleton-shimmer--button {
+  margin-top: auto;
+}
+
+.page-skeleton__quick-card {
+  pointer-events: none;
+  cursor: default;
+}
+
+.page-skeleton__quick-card:hover {
+  transform: none;
+  box-shadow: var(--shadow-card);
+}
+
+.skeleton-shimmer--tab {
+  width: 108px;
+  height: 36px;
+  border-radius: 8px 8px 0 0;
+  margin-bottom: -1px;
+}
+
+.skeleton-shimmer--list-title {
+  width: 120px;
+  height: 22px;
+}
+
+.skeleton-shimmer--list-subtitle {
+  width: min(320px, 100%);
+  height: 14px;
+}
+
+.skeleton-shimmer--toolbar-search {
+  flex: 1;
+  height: 48px;
+  border-radius: 10px;
+}
+
+.skeleton-shimmer--toolbar-btn {
+  width: 150px;
+  height: 44px;
+  border-radius: var(--radius-btn);
+  flex-shrink: 0;
+}
+
+.skeleton-shimmer--toolbar-btn-green {
+  width: 158px;
+}
+
+.skeleton-shimmer--list-meta {
+  width: 180px;
+  height: 13px;
+}
+
+.skeleton-shimmer--pagination-nav {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeleton-shimmer--pagination-page {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeleton-shimmer--pagination-page-active {
+  width: 40px;
+}
+
+.skeleton-table {
+  padding: 8px 16px 16px;
+}
+
+.skeleton-table__head,
+.skeleton-table__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) 132px;
+  align-items: center;
+  gap: 16px;
+}
+
+.skeleton-table__head {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.skeleton-table__row {
+  padding: 14px 8px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.skeleton-table__row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-shimmer--table-col {
+  height: 13px;
+}
+
+.skeleton-shimmer--table-col-name {
+  width: 42px;
+}
+
+.skeleton-shimmer--table-col-cpf {
+  width: 32px;
+}
+
+.skeleton-shimmer--table-col-date {
+  width: 112px;
+}
+
+.skeleton-shimmer--table-col-actions {
+  width: 48px;
+  justify-self: end;
+}
+
+.skeleton-shimmer--table-cell {
+  height: 14px;
+}
+
+.skeleton-shimmer--table-cell-name {
+  width: 72%;
+}
+
+.skeleton-shimmer--table-cell-cpf {
+  width: 118px;
+}
+
+.skeleton-shimmer--table-cell-date {
+  width: 82%;
+}
+
+.skeleton-table__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.skeleton-shimmer--table-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.list-header__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+
+.list-header__subtitle {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.list-toolbar__search {
+  flex: 1;
+}
+
+.list-toolbar__btn {
+  flex-shrink: 0;
+  min-width: 150px;
+}
+
+.list-meta {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .list-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .list-toolbar__btn {
+    width: 100%;
+  }
+
+  .skeleton-shimmer--toolbar-btn,
+  .skeleton-shimmer--toolbar-btn-green {
+    width: 100%;
+  }
+
+  .skeleton-table__head,
+  .skeleton-table__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+    gap: 12px;
+  }
+
+  .skeleton-shimmer--table-col-date,
+  .skeleton-shimmer--table-cell-date,
+  .skeleton-table__actions {
+    display: none;
+  }
+}
+
 .section-header {
   margin: 36px 0 20px;
 }

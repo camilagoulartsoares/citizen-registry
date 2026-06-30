@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { usePageReady } from '@/composables/usePageReady'
 import { useCitizen } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
 import AppPageTabs from '@/components/AppPageTabs.vue'
@@ -10,6 +11,9 @@ import CitizenEditDialog from '@/components/CitizenEditDialog.vue'
 import CitizenAttentionDialog from '@/components/CitizenAttentionDialog.vue'
 import CitizenDeleteDialog from '@/components/CitizenDeleteDialog.vue'
 import CitizenDeleteSuccessDialog from '@/components/CitizenDeleteSuccessDialog.vue'
+import SkeletonListView from '@/components/skeleton/SkeletonListView.vue'
+
+const { isPageReady } = usePageReady()
 
 const {
   loading,
@@ -143,7 +147,9 @@ onMounted(fetchCitizens)
 </script>
 
 <template>
-  <div>
+  <SkeletonListView v-if="!isPageReady" />
+
+  <div v-else>
     <AppPageTabs />
 
     <div class="list-header mb-5">
@@ -230,14 +236,12 @@ onMounted(fetchCitizens)
       {{ totalItems }} {{ totalItems === 1 ? 'registro encontrado' : 'registros encontrados' }}
     </p>
 
-    <!-- Visualizar -->
     <CitizenViewDialog
       v-model="viewDialog"
       :citizen="selectedCitizen"
       :created-at-label="selectedCitizen ? formatViewDate(selectedCitizen.createdAt) : '—'"
     />
 
-    <!-- Editar -->
     <CitizenEditDialog
       v-model="editDialog"
       :citizen="selectedCitizen"
@@ -248,14 +252,12 @@ onMounted(fetchCitizens)
       @clear-error="clearError"
     />
 
-    <!-- Atenção -->
     <CitizenAttentionDialog
       v-model="attentionDialog"
       :citizen="selectedCitizen"
       @continue="proceedToDeleteConfirm"
     />
 
-    <!-- Confirmar exclusão -->
     <CitizenDeleteDialog
       v-model="deleteDialog"
       :citizen="selectedCitizen"
@@ -263,7 +265,6 @@ onMounted(fetchCitizens)
       @confirm="handleDelete"
     />
 
-    <!-- Exclusão com sucesso -->
     <CitizenDeleteSuccessDialog
       v-model="deleteSuccessDialog"
       :citizen="deletedCitizen"
@@ -272,39 +273,6 @@ onMounted(fetchCitizens)
 </template>
 
 <style scoped>
-.list-header__title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 4px;
-}
-
-.list-header__subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-  margin: 0;
-}
-
-.list-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.list-toolbar__search {
-  flex: 1;
-}
-
-.list-toolbar__btn {
-  flex-shrink: 0;
-  min-width: 150px;
-}
-
-.list-meta {
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
 .empty-title {
   font-size: 16px;
   font-weight: 600;
@@ -314,49 +282,5 @@ onMounted(fetchCitizens)
 .empty-subtitle {
   font-size: 14px;
   color: var(--color-text-muted);
-}
-
-.dialog-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.dialog-text {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-.dialog-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.dialog-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 14px;
-  color: var(--color-text);
-}
-
-.dialog-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-@media (max-width: 640px) {
-  .list-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .list-toolbar__btn {
-    width: 100%;
-  }
 }
 </style>

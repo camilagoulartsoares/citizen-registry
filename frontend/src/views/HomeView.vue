@@ -1,26 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { usePageReady } from '@/composables/usePageReady'
 import CitizenForm from '@/components/CitizenForm.vue'
 import CpfSearch from '@/components/CpfSearch.vue'
 import QuickAccessGrid from '@/components/QuickAccessGrid.vue'
 import HomeViewSkeleton from '@/components/HomeViewSkeleton.vue'
 
-const isPageReady = ref(false)
-
-const MIN_SKELETON_MS = 320
-
-onMounted(() => {
-  const startedAt = performance.now()
-
-  requestAnimationFrame(() => {
-    const elapsed = performance.now() - startedAt
-    const remaining = Math.max(0, MIN_SKELETON_MS - elapsed)
-
-    setTimeout(() => {
-      isPageReady.value = true
-    }, remaining)
-  })
-})
+const { isPageReady } = usePageReady()
 </script>
 
 <template>
