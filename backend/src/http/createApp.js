@@ -13,6 +13,10 @@ function createApp(repository) {
   app.use(rateLimitMiddleware())
   app.use(express.json())
 
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok' })
+  })
+
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
   app.get('/api-docs.json', (_req, res) => {
     res.json(swaggerSpec)
@@ -20,10 +24,6 @@ function createApp(repository) {
 
   app.use(createRoutes(repository))
   app.use(errorHandler)
-
-  app.get('/health', (_req, res) => {
-    res.json({ status: 'ok' })
-  })
 
   return app
 }

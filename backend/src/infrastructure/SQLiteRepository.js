@@ -131,7 +131,7 @@ class SQLiteRepository extends CitizenRepository {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit) || 1,
+      totalPages: total === 0 ? 0 : Math.ceil(total / limit),
     }
   }
 

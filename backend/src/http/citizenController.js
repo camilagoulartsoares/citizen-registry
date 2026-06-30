@@ -1,9 +1,4 @@
-const {
-  RegisterCitizen,
-  DuplicateCpfError,
-  InvalidCpfError,
-  InvalidNameError,
-} = require('../application/RegisterCitizen')
+const { RegisterCitizen } = require('../application/RegisterCitizen')
 const FindCitizen = require('../application/FindCitizen')
 const ListCitizens = require('../application/ListCitizens')
 const { GetCitizen, CitizenNotFoundError } = require('../application/GetCitizen')
@@ -106,8 +101,4 @@ function createCitizenController(repository) {
 module.exports = {
   CitizenController,
   createCitizenController,
-  DuplicateCpfError,
-  InvalidCpfError,
-  InvalidNameError,
-  CitizenNotFoundError,
 }

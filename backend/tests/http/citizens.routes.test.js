@@ -1,6 +1,11 @@
 const request = require('supertest')
 const { createTestApp } = require('../helpers/testApp')
-const { VALID_CPF, VALID_CPF_ALT, INVALID_CPF } = require('../helpers/fixtures')
+const {
+  VALID_CPF,
+  VALID_CPF_ALT,
+  INVALID_CPF,
+  buildCitizenPayload,
+} = require('../helpers/fixtures')
 
 describe('Citizens HTTP API', () => {
   let app
@@ -14,31 +19,11 @@ describe('Citizens HTTP API', () => {
     db.close()
   })
 
-  describe('GET /health', () => {
-    it('retorna status ok', async () => {
-      const response = await request(app).get('/health')
-
-      expect(response.status).toBe(200)
-      expect(response.body).toEqual({ status: 'ok' })
-    })
-  })
-
-  describe('GET /api-docs.json', () => {
-    it('expõe especificação OpenAPI', async () => {
-      const response = await request(app).get('/api-docs.json')
-
-      expect(response.status).toBe(200)
-      expect(response.body.openapi).toBe('3.0.0')
-      expect(response.body.paths['/citizens']).toBeDefined()
-      expect(response.body.paths['/citizens/export']).toBeDefined()
-    })
-  })
-
   describe('POST /citizens', () => {
     it('cadastra cidadão com dados válidos', async () => {
       const response = await request(app)
         .post('/citizens')
-        .send({ name: 'Maria Silva', cpf: '529.982.247-25' })
+        .send(buildCitizenPayload({ cpf: '529.982.247-25' }))
 
       expect(response.status).toBe(201)
       expect(response.body.name).toBe('Maria Silva')
@@ -50,7 +35,7 @@ describe('Citizens HTTP API', () => {
     it('rejeita nome inválido', async () => {
       const response = await request(app)
         .post('/citizens')
-        .send({ name: 'Ab', cpf: VALID_CPF })
+        .send(buildCitizenPayload({ name: 'Ab' }))
 
       expect(response.status).toBe(400)
       expect(response.body.message).toMatch(/mínimo 3/i)
@@ -59,20 +44,27 @@ describe('Citizens HTTP API', () => {
     it('rejeita CPF inválido', async () => {
       const response = await request(app)
         .post('/citizens')
-        .send({ name: 'Maria Silva', cpf: INVALID_CPF })
+        .send(buildCitizenPayload({ cpf: INVALID_CPF }))
 
       expect(response.status).toBe(400)
       expect(response.body.message).toMatch(/cpf inválido/i)
     })
 
-    it('rejeita CPF duplicado', async () => {
-      await request(app)
+    it('rejeita corpo sem nome', async () => {
+      const response = await request(app)
         .post('/citizens')
-        .send({ name: 'Maria Silva', cpf: VALID_CPF })
+        .send({ cpf: VALID_CPF })
+
+      expect(response.status).toBe(400)
+      expect(response.body.message).toMatch(/mínimo 3/i)
+    })
+
+    it('rejeita CPF duplicado', async () => {
+      await request(app).post('/citizens').send(buildCitizenPayload())
 
       const response = await request(app)
         .post('/citizens')
-        .send({ name: 'Outra Pessoa', cpf: VALID_CPF })
+        .send(buildCitizenPayload({ name: 'Outra Pessoa' }))
 
       expect(response.status).toBe(409)
       expect(response.body.message).toMatch(/cadastrado/i)
@@ -81,8 +73,10 @@ describe('Citizens HTTP API', () => {
 
   describe('GET /citizens', () => {
     beforeEach(async () => {
-      await request(app).post('/citizens').send({ name: 'Maria Silva', cpf: VALID_CPF })
-      await request(app).post('/citizens').send({ name: 'Pedro Costa', cpf: VALID_CPF_ALT })
+      await request(app).post('/citizens').send(buildCitizenPayload())
+      await request(app)
+        .post('/citizens')
+        .send(buildCitizenPayload({ name: 'Pedro Costa', cpf: VALID_CPF_ALT }))
     })
 
     it('busca simples por query', async () => {
@@ -92,6 +86,13 @@ describe('Citizens HTTP API', () => {
       expect(Array.isArray(response.body)).toBe(true)
       expect(response.body).toHaveLength(1)
       expect(response.body[0].name).toBe('Maria Silva')
+    })
+
+    it('retorna lista vazia quando query não encontra resultados', async () => {
+      const response = await request(app).get('/citizens').query({ query: 'Inexistente' })
+
+      expect(response.status).toBe(200)
+      expect(response.body).toEqual([])
     })
 
     it('lista paginada', async () => {
@@ -106,13 +107,23 @@ describe('Citizens HTTP API', () => {
       expect(response.body.limit).toBe(1)
       expect(response.body.totalPages).toBe(2)
     })
+
+    it('retorna lista paginada vazia quando não há registros', async () => {
+      db.close()
+      ;({ app, db } = createTestApp())
+
+      const response = await request(app).get('/citizens').query({ page: 1, limit: 10 })
+
+      expect(response.status).toBe(200)
+      expect(response.body.data).toEqual([])
+      expect(response.body.total).toBe(0)
+      expect(response.body.totalPages).toBe(0)
+    })
   })
 
   describe('GET /citizens/:id', () => {
     it('retorna cidadão por ID', async () => {
-      const created = await request(app)
-        .post('/citizens')
-        .send({ name: 'Maria Silva', cpf: VALID_CPF })
+      const created = await request(app).post('/citizens').send(buildCitizenPayload())
 
       const response = await request(app).get(`/citizens/${created.body.id}`)
 
@@ -131,13 +142,11 @@ describe('Citizens HTTP API', () => {
 
   describe('PUT /citizens/:id', () => {
     it('atualiza cidadão existente', async () => {
-      const created = await request(app)
-        .post('/citizens')
-        .send({ name: 'Maria Silva', cpf: VALID_CPF })
+      const created = await request(app).post('/citizens').send(buildCitizenPayload())
 
       const response = await request(app)
         .put(`/citizens/${created.body.id}`)
-        .send({ name: 'Maria Santos', cpf: VALID_CPF })
+        .send(buildCitizenPayload({ name: 'Maria Santos' }))
 
       expect(response.status).toBe(200)
       expect(response.body.name).toBe('Maria Santos')
@@ -147,22 +156,42 @@ describe('Citizens HTTP API', () => {
     it('retorna 404 para ID inexistente', async () => {
       const response = await request(app)
         .put('/citizens/999')
-        .send({ name: 'Maria Silva', cpf: VALID_CPF })
+        .send(buildCitizenPayload())
 
       expect(response.status).toBe(404)
     })
 
+    it('rejeita nome inválido na atualização', async () => {
+      const created = await request(app).post('/citizens').send(buildCitizenPayload())
+
+      const response = await request(app)
+        .put(`/citizens/${created.body.id}`)
+        .send(buildCitizenPayload({ name: 'Ab' }))
+
+      expect(response.status).toBe(400)
+      expect(response.body.message).toMatch(/mínimo 3/i)
+    })
+
+    it('rejeita CPF inválido na atualização', async () => {
+      const created = await request(app).post('/citizens').send(buildCitizenPayload())
+
+      const response = await request(app)
+        .put(`/citizens/${created.body.id}`)
+        .send(buildCitizenPayload({ cpf: INVALID_CPF }))
+
+      expect(response.status).toBe(400)
+      expect(response.body.message).toMatch(/cpf inválido/i)
+    })
+
     it('rejeita CPF duplicado na atualização', async () => {
-      const first = await request(app)
-        .post('/citizens')
-        .send({ name: 'Maria Silva', cpf: VALID_CPF })
+      const first = await request(app).post('/citizens').send(buildCitizenPayload())
       await request(app)
         .post('/citizens')
-        .send({ name: 'Pedro Costa', cpf: VALID_CPF_ALT })
+        .send(buildCitizenPayload({ name: 'Pedro Costa', cpf: VALID_CPF_ALT }))
 
       const response = await request(app)
         .put(`/citizens/${first.body.id}`)
-        .send({ name: 'Maria Silva', cpf: VALID_CPF_ALT })
+        .send(buildCitizenPayload({ cpf: VALID_CPF_ALT }))
 
       expect(response.status).toBe(409)
     })
@@ -170,9 +199,7 @@ describe('Citizens HTTP API', () => {
 
   describe('DELETE /citizens/:id', () => {
     it('remove cidadão existente', async () => {
-      const created = await request(app)
-        .post('/citizens')
-        .send({ name: 'Maria Silva', cpf: VALID_CPF })
+      const created = await request(app).post('/citizens').send(buildCitizenPayload())
 
       const response = await request(app).delete(`/citizens/${created.body.id}`)
 
@@ -192,7 +219,7 @@ describe('Citizens HTTP API', () => {
 
   describe('GET /citizens/export', () => {
     it('exporta CSV com cabeçalho e dados', async () => {
-      await request(app).post('/citizens').send({ name: 'Maria Silva', cpf: VALID_CPF })
+      await request(app).post('/citizens').send(buildCitizenPayload())
 
       const response = await request(app).get('/citizens/export')
 
@@ -204,9 +231,18 @@ describe('Citizens HTTP API', () => {
       expect(response.text).toContain('529.982.247-25')
     })
 
+    it('exporta apenas cabeçalho quando não há registros', async () => {
+      const response = await request(app).get('/citizens/export')
+
+      expect(response.status).toBe(200)
+      expect(response.text.trim()).toBe('Nome;CPF;Data de cadastro')
+    })
+
     it('aplica filtro query na exportação', async () => {
-      await request(app).post('/citizens').send({ name: 'Maria Silva', cpf: VALID_CPF })
-      await request(app).post('/citizens').send({ name: 'Pedro Costa', cpf: VALID_CPF_ALT })
+      await request(app).post('/citizens').send(buildCitizenPayload())
+      await request(app)
+        .post('/citizens')
+        .send(buildCitizenPayload({ name: 'Pedro Costa', cpf: VALID_CPF_ALT }))
 
       const response = await request(app).get('/citizens/export').query({ query: 'Pedro' })
 

@@ -24,7 +24,7 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 |---|---|
 | **Swagger UI** | Documentação interativa da API em `/api-docs` — teste endpoints pelo navegador |
 | **Clean Architecture** | Backend em camadas: Domain → Application → Infrastructure → HTTP |
-| **59 testes** | 46 Jest (backend) + 13 Vitest (frontend) |
+| **68 testes** | 55 Jest (backend) + 13 Vitest (frontend) |
 | **CRUD completo** | Cadastrar, listar, buscar, editar, remover cidadãos |
 | **Exportação CSV** | `GET /citizens/export` + download na interface |
 | **Rate limiting** | Proteção básica para produção (100 req/IP / 15 min) |
@@ -116,7 +116,7 @@ citizen-registry-system/
 │   │           ├── rateLimit.js    # express-rate-limit
 │   │           └── errorHandler.js
 │   │
-│   ├── tests/                      # 46 testes Jest
+│   ├── tests/                      # 55 testes Jest (unitários + integração supertest)
 │   │   ├── http/                   # Integração supertest
 │   │   ├── helpers/                # App de teste + fixtures
 │   │   ├── CpfValidator.test.js
@@ -325,7 +325,7 @@ Backend:  GET http://localhost:3000/citizens?page=1&limit=10
 | **Swagger / OpenAPI 3.0** | Documentação interativa em `/api-docs` (swagger-jsdoc + swagger-ui-express) |
 | **Rate limiting** | 100 req/IP a cada 15 min (express-rate-limit), desligado em testes |
 | **Clean Architecture** | Domain → Application → Infrastructure → HTTP |
-| **Testes** | 46 testes Jest (unitários, repositório `:memory:`, integração supertest) |
+| **Testes** | 55 testes Jest (unitários, repositório `:memory:`, integração supertest) |
 
 ### Frontend
 
@@ -635,8 +635,9 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 
 | Comando | O que faz |
 |---------|-----------|
-| `npm test` (na raiz) | Roda **59 testes** (46 backend + 13 frontend) |
-| `cd backend && npm test` | Só backend (46 testes) |
+| `npm test` (na raiz) | Roda **68 testes** (55 backend + 13 frontend) |
+| `cd backend && npm test` | Só backend (55 testes) |
+| `cd backend && npm run test:integration` | Só integração HTTP (supertest) |
 | `cd frontend && npm test` | Só frontend (13 testes) |
 | `cd backend && npm run test:coverage` | Cobertura em `backend/coverage/` |
 | `cd frontend && npm run test:watch` | Vitest em modo watch |
@@ -688,14 +689,17 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 - `findAll` com paginação e filtro
 - `findAllForExport`, `update`, `delete`
 
-### `tests/http/citizens.routes.test.js`
+### `tests/http/` — integração (supertest)
 
-- Integração HTTP com **supertest** e app Express real
-- `GET /health`, `GET /api-docs.json`, `POST /citizens`, `GET /citizens`, `GET /citizens/:id`
-- `PUT /citizens/:id`, `DELETE /citizens/:id`, `GET /citizens/export`
+| Arquivo | Cobertura |
+|---------|-----------|
+| `system.routes.test.js` | `GET /health`, `GET /api-docs.json`, CORS, 404, JSON inválido |
+| `citizens.routes.test.js` | CRUD completo, paginação, busca, exportação CSV, validações HTTP |
+
+- App Express real com SQLite em memória (`createTestApp`)
 - Valida status HTTP e corpo das respostas de ponta a ponta
 
-**Total: 46 testes (backend).**
+**Total: 55 testes (backend).**
 
 ### Testes do frontend (Vitest)
 
@@ -707,7 +711,7 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 | `CitizenForm.test.js` | Validação visual de nome curto e botão desabilitado |
 | `useCitizen.test.js` | `resolveApiError` e `createCitizen` com CPF duplicado (API mockada) |
 
-**Total: 13 testes (frontend).** `npm test` na raiz = **59 testes** no total.
+**Total: 13 testes (frontend).** `npm test` na raiz = **68 testes** no total.
 
 ### Teste manual da API (com servidor rodando)
 

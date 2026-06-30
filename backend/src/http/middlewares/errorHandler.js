@@ -6,6 +6,10 @@ const {
 const { CitizenNotFoundError } = require('../../application/GetCitizen')
 
 function errorHandler(err, _req, res, _next) {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ message: 'JSON inválido' })
+  }
+
   if (err instanceof DuplicateCpfError) {
     return res.status(409).json({ message: err.message })
   }
