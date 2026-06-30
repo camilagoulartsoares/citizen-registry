@@ -15,6 +15,8 @@ Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com val
 | **OpenAPI JSON** | https://citizen-registry-system-backend.onrender.com/api-docs.json |
 | **Health check** | https://citizen-registry-system-backend.onrender.com/health |
 
+![Interface — Cadastro CPF](docs/images/app-demo.jpg)
+
 > A raiz do backend (`/`) redireciona automaticamente para o **Swagger**.  
 > No plano free do Render, a primeira requisição após inatividade pode levar ~50s.
 
@@ -657,7 +659,7 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 |---------|-----------|
 | `npm test` (na raiz) | Roda **69 testes** unitários (56 backend + 13 frontend) |
 | `npm run test:e2e` | 3 testes Playwright E2E |
-| `npm run test:all` | Unitários + E2E (**77 testes**) |
+| `npm run test:all` | Unitários + E2E (**79 testes**) |
 | `cd backend && npm test` | Só backend (56 testes) |
 | `cd backend && npm run test:integration` | Só integração HTTP (supertest) |
 | `cd frontend && npm test` | Só frontend (13 testes) |
@@ -764,7 +766,7 @@ Workflow `.github/workflows/ci.yml` — em todo `push`/`pull_request` na `main`:
 | `CitizenForm.test.js` | Nome curto, nome só com números e botão desabilitado |
 | `useCitizen.test.js` | `resolveApiError` e `createCitizen` com CPF duplicado (API mockada) |
 
-**Total: 14 testes (Vitest).** `npm run test:all` = **77 testes** no total.
+**Total: 16 testes (Vitest).** `npm run test:all` = **79 testes** no total.
 
 ### Teste manual da API (com servidor rodando)
 
