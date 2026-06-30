@@ -276,31 +276,54 @@ Infrastructure (SQLiteRepository, exportação CSV)
 
 ## 📁 Estrutura do projeto
 
+Visão resumida das pastas principais. Arquivos gerados localmente (`node_modules/`, `dist/`, `*.sqlite`, `test-results/`) **não vão para o Git** — estão no `.gitignore`.
+
 ```
 citizen-registry-system/
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # Pipeline GitHub Actions
 ├── backend/
 │   ├── src/
-│   │   ├── domain/           # Entidades e validadores
-│   │   ├── application/      # Casos de uso
-│   │   ├── infrastructure/   # SQLite e CSV
-│   │   └── http/             # Express, Swagger, rotas
-│   └── tests/
+│   │   ├── domain/             # Entidades e validadores (CPF, nome)
+│   │   ├── application/        # Casos de uso (Register, Find, Update…)
+│   │   ├── infrastructure/   # SQLiteRepository e exportação CSV
+│   │   └── http/               # Express, Swagger, rotas e middlewares
+│   ├── tests/                  # Jest (unitários + integração supertest)
+│   ├── data/                   # SQLite em runtime (.gitkeep apenas no repo)
+│   ├── server.js
+│   └── package.json
 ├── frontend/
 │   ├── src/
-│   │   ├── views/
-│   │   ├── components/
-│   │   ├── composables/
-│   │   └── services/
-│   └── public/
-├── e2e/                      # Testes Playwright
+│   │   ├── views/              # Páginas (Home, Cadastrar, Consultar, Lista)
+│   │   ├── components/         # Formulários, tabela, modais, sidebar
+│   │   ├── composables/        # useCitizen, useCpfMask, useCpfAvailability…
+│   │   ├── services/           # Cliente Axios
+│   │   └── router/
+│   ├── public/
+│   └── package.json
+├── e2e/                        # Testes Playwright
 ├── docs/
-│   ├── demo.gif
-│   └── images/swagger-ui.png
-├── .github/workflows/ci.yml
+│   ├── demo.gif                # GIF de demonstração
+│   ├── DEPLOY.md               # Guia de hospedagem
+│   └── images/
 ├── docker-compose.yml
-├── render.yaml
-└── vercel.json
+├── playwright.config.js
+├── render.yaml                 # Blueprint Render (backend)
+├── vercel.json                 # Build Vercel (frontend)
+├── package.json                # Scripts raiz (dev, test, test:e2e)
+└── README.md
 ```
+
+### O que não aparece na árvore (e por quê)
+
+| Item | Motivo |
+|------|--------|
+| `node_modules/` | Dependências — instaladas com `npm install` |
+| `frontend/dist/` | Build de produção — gerado com `npm run build` |
+| `backend/data/*.sqlite` | Banco local com dados reais — ignorado pelo Git |
+| `test-results/`, `playwright-report/` | Saída dos testes E2E |
+| `.env`, `.env.local` | Variáveis sensíveis — só `.env.example` fica no repo |
 
 ---
 
