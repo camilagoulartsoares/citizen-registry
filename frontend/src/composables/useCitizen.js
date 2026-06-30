@@ -3,13 +3,15 @@ import { citizenApi } from '@/services/api'
 import { useCpfMask } from '@/composables/useCpfMask'
 import { useSnackbar } from '@/composables/useSnackbar'
 
+export const CITIZEN_NOT_FOUND_MESSAGE = 'Cidadão não encontrado'
+
 export function resolveApiError(err, fallback) {
   const status = err.response?.status
   const msg = String(err.userMessage ?? err.response?.data?.message ?? '').trim()
   const lower = msg.toLowerCase()
 
   if (status === 404 || lower.includes('não encontrado') || lower.includes('nao encontrado')) {
-    return 'Cidadão não encontrado.'
+    return CITIZEN_NOT_FOUND_MESSAGE
   }
 
   if (status === 409 || lower.includes('cadastrado') || lower.includes('duplicad')) {
@@ -105,7 +107,7 @@ export function useCitizen() {
       const response = await citizenApi.search(query.trim())
       const citizens = extractCitizens(response).map(normalizeCitizen)
       if (citizens.length === 0) {
-        notifyError('Cidadão não encontrado.')
+        notifyError(CITIZEN_NOT_FOUND_MESSAGE)
         return null
       }
       return citizens[0]

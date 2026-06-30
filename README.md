@@ -1,5 +1,7 @@
 # Cadastro CPF
 
+[![CI](https://github.com/camilagoulartsoares/citizen-registry-system/actions/workflows/ci.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry-system/actions/workflows/ci.yml)
+
 Sistema web de **cadastro e consulta de cidadãos brasileiros por CPF**, com validação de dígitos verificadores, persistência em SQLite, **documentação Swagger/OpenAPI** e interface administrativa inspirada em sistemas municipais (identidade visual GESUAS).
 
 ---
@@ -34,11 +36,12 @@ O arquivo `vercel.json` na raiz do repositório já configura build em `frontend
 |---|---|
 | **Swagger UI** | Documentação interativa da API em `/api-docs` — teste endpoints pelo navegador |
 | **Clean Architecture** | Backend em camadas: Domain → Application → Infrastructure → HTTP |
-| **77 testes** | 60 Jest + 14 Vitest + 3 Playwright E2E + GitHub Actions CI |
+| **79 testes** | 60 Jest + 16 Vitest + 3 Playwright E2E + GitHub Actions CI |
 | **CRUD completo** | Cadastrar, listar, buscar, editar, remover cidadãos |
 | **Exportação CSV** | `GET /citizens/export` + download na interface |
 | **Rate limiting** | Proteção básica para produção (100 req/IP / 15 min) |
 | **Validação de formulário** | Nome com letras (mín. 3 caracteres); CPF com dígitos verificadores; verificação de CPF já cadastrado em tempo real |
+| **UX moderna** | Dark mode, snackbar global, skeleton loader, página 404 |
 
 ### Links rápidos (desenvolvimento local)
 
@@ -654,7 +657,7 @@ Cliente Axios com `baseURL: /api`, timeout de 15s e interceptor de erros. Métod
 |---------|-----------|
 | `npm test` (na raiz) | Roda **69 testes** unitários (56 backend + 13 frontend) |
 | `npm run test:e2e` | 3 testes Playwright E2E |
-| `npm run test:all` | Unitários + E2E (**72 testes**) |
+| `npm run test:all` | Unitários + E2E (**77 testes**) |
 | `cd backend && npm test` | Só backend (56 testes) |
 | `cd backend && npm run test:integration` | Só integração HTTP (supertest) |
 | `cd frontend && npm test` | Só frontend (13 testes) |

@@ -136,7 +136,7 @@ describe('Citizens HTTP API', () => {
       const response = await request(app).get('/citizens/999')
 
       expect(response.status).toBe(404)
-      expect(response.body.message).toMatch(/não encontrado/i)
+      expect(response.body.message).toBe('Cidadão não encontrado')
     })
   })
 

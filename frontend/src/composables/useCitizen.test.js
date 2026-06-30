@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useCitizen, resolveApiError } from '@/composables/useCitizen'
+import { useCitizen, resolveApiError, CITIZEN_NOT_FOUND_MESSAGE } from '@/composables/useCitizen'
 import { citizenApi } from '@/services/api'
 
 const showError = vi.fn()
@@ -30,6 +30,18 @@ describe('useCitizen', () => {
   })
 
   describe('resolveApiError', () => {
+    it('mapeia erro 404 para a mensagem exata do enunciado', () => {
+      const message = resolveApiError({
+        response: {
+          status: 404,
+          data: { message: 'Cidadão não encontrado' },
+        },
+      }, 'fallback')
+
+      expect(message).toBe(CITIZEN_NOT_FOUND_MESSAGE)
+      expect(message).toBe('Cidadão não encontrado')
+    })
+
     it('mapeia erro de CPF duplicado (409)', () => {
       const message = resolveApiError({
         response: {
@@ -39,6 +51,19 @@ describe('useCitizen', () => {
       }, 'fallback')
 
       expect(message).toBe('Este CPF já está cadastrado no sistema.')
+    })
+  })
+
+  describe('searchCitizen', () => {
+    it('exibe mensagem exata quando a busca não retorna resultados', async () => {
+      citizenApi.search.mockResolvedValue({ data: [] })
+
+      const { searchCitizen, error } = useCitizen()
+      const result = await searchCitizen('000.000.000-00')
+
+      expect(result).toBeNull()
+      expect(error.value).toBe('Cidadão não encontrado')
+      expect(showError).toHaveBeenCalledWith('Cidadão não encontrado')
     })
   })
 
