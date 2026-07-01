@@ -2,12 +2,6 @@ import { ref } from 'vue'
 import { citizenApi } from '@/services/api'
 import { useCpfMask } from '@/composables/useCpfMask'
 
-function extractCitizens(data) {
-  if (Array.isArray(data)) return data
-  if (Array.isArray(data?.data)) return data.data
-  return []
-}
-
 export function useCpfAvailability(getExcludeCpf = () => null) {
   const { unmask, isValid } = useCpfMask()
   const isRegistered = ref(false)
@@ -53,10 +47,8 @@ export function useCpfAvailability(getExcludeCpf = () => null) {
 
     debounceId = setTimeout(async () => {
       try {
-        const response = await citizenApi.search(digits)
-        const found = extractCitizens(response.data).some(
-          (citizen) => citizen.cpf === digits,
-        )
+        const response = await citizenApi.checkCpf(digits)
+        const found = Boolean(response.data?.exists)
 
         if (currentRequest === requestId) {
           isRegistered.value = found

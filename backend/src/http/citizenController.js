@@ -5,6 +5,7 @@ const { GetCitizen, CitizenNotFoundError } = require('../application/GetCitizen'
 const UpdateCitizen = require('../application/UpdateCitizen')
 const DeleteCitizen = require('../application/DeleteCitizen')
 const ExportCitizens = require('../application/ExportCitizens')
+const CheckCitizenCpf = require('../application/CheckCitizenCpf')
 const { citizensToCsv } = require('../infrastructure/csvExport')
 
 class CitizenController {
@@ -71,6 +72,15 @@ class CitizenController {
     }
   }
 
+  async checkCpf(req, res, next) {
+    try {
+      const result = await this.checkCitizenCpf.execute(req.params.cpf)
+      res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  }
+
   async exportCsv(req, res, next) {
     try {
       const citizens = await this.exportCitizens.execute({ query: req.query.query })
@@ -95,6 +105,7 @@ function createCitizenController(repository) {
     updateCitizen: new UpdateCitizen(repository),
     deleteCitizen: new DeleteCitizen(repository),
     exportCitizens: new ExportCitizens(repository),
+    checkCitizenCpf: new CheckCitizenCpf(repository),
   })
 }
 

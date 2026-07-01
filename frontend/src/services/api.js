@@ -38,6 +38,10 @@ export const citizenApi = {
     return api.get('/citizens', { params: { query } })
   },
 
+  checkCpf(cpf) {
+    return api.get(`/citizens/check-cpf/${cpf}`)
+  },
+
   list({ page = 1, limit = 10, query = '' } = {}) {
     const params = { page, limit }
     if (query) {

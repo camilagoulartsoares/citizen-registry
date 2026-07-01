@@ -7,6 +7,7 @@ function createRoutes(repository) {
 
   router.post('/citizens', (req, res, next) => controller.create(req, res, next))
   router.get('/citizens/export', (req, res, next) => controller.exportCsv(req, res, next))
+  router.get('/citizens/check-cpf/:cpf', (req, res, next) => controller.checkCpf(req, res, next))
   router.get('/citizens', (req, res, next) => controller.list(req, res, next))
   router.get('/citizens/:id', (req, res, next) => controller.getById(req, res, next))
   router.put('/citizens/:id', (req, res, next) => controller.update(req, res, next))

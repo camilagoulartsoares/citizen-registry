@@ -1,0 +1,19 @@
+# Mantém o backend no Render acordado (plano free dorme após ~15 min sem tráfego).
+# Roda a cada 10 minutos e chama GET /health.
+name: Keep backend alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render health
+        run: |
+          curl --fail --silent --show-error --max-time 90 \
+            "https://citizen-registry-system-backend.onrender.com/health"
+          echo ""
+          echo "Backend respondeu OK"

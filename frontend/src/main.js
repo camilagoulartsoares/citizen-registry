@@ -8,6 +8,7 @@ import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 import '@/assets/styles/main.css'
 import { loadSavedTheme } from '@/composables/useAppTheme'
+import { warmBackend } from '@/services/warmup'
 
 const vuetify = createVuetify({
   components,
@@ -53,6 +54,10 @@ const vuetify = createVuetify({
 })
 
 loadSavedTheme(vuetify.theme)
+
+if (import.meta.env.PROD) {
+  warmBackend()
+}
 
 const app = createApp(App)
 

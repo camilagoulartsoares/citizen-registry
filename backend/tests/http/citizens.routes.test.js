@@ -71,6 +71,31 @@ describe('Citizens HTTP API', () => {
     })
   })
 
+  describe('GET /citizens/check-cpf/:cpf', () => {
+    it('retorna exists true quando CPF já cadastrado', async () => {
+      await request(app).post('/citizens').send(buildCitizenPayload())
+
+      const response = await request(app).get(`/citizens/check-cpf/${VALID_CPF}`)
+
+      expect(response.status).toBe(200)
+      expect(response.body).toEqual({ exists: true })
+    })
+
+    it('retorna exists false quando CPF não cadastrado', async () => {
+      const response = await request(app).get(`/citizens/check-cpf/${VALID_CPF}`)
+
+      expect(response.status).toBe(200)
+      expect(response.body).toEqual({ exists: false })
+    })
+
+    it('retorna exists false para CPF inválido', async () => {
+      const response = await request(app).get(`/citizens/check-cpf/${INVALID_CPF}`)
+
+      expect(response.status).toBe(200)
+      expect(response.body).toEqual({ exists: false })
+    })
+  })
+
   describe('GET /citizens', () => {
     beforeEach(async () => {
       await request(app).post('/citizens').send(buildCitizenPayload())
