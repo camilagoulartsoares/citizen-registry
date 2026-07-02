@@ -281,7 +281,7 @@ Infrastructure (SQLiteRepository, exportação CSV)
 Visão resumida das pastas principais. Arquivos gerados localmente (`node_modules/`, `dist/`, `*.sqlite`, `test-results/`) **não vão para o Git** — estão no `.gitignore`.
 
 ```
-citizen-registry-system/
+citizen-registry/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml              # Pipeline GitHub Actions
