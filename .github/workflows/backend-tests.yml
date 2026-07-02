@@ -1,0 +1,44 @@
+name: Backend (Jest)
+
+run-name: Backend (Jest) — testes da API
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  test:
+    name: Backend (Jest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci --prefix backend
+
+      - name: Rodar testes
+        run: npm test --prefix backend
+        env:
+          CI: true
+
+      - name: Publicar resultados dos testes
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Backend (Jest)
+          path: backend/test-results/jest-junit.xml
+          reporter: java-junit
+          fail-on-error: false
