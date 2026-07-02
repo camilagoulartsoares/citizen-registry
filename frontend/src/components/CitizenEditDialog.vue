@@ -2,6 +2,7 @@
 import { ref, watch, computed } from 'vue'
 import { useCpfMask } from '@/composables/useCpfMask'
 import { useCpfAvailability } from '@/composables/useCpfAvailability'
+import { useCpfFormField } from '@/composables/useCpfFormField'
 import { isValidName, NAME_VALIDATION_MESSAGE } from '@/composables/useNameValidation'
 
 const props = defineProps({
@@ -24,6 +25,11 @@ const {
 
 const name = ref('')
 const cpf = ref('')
+
+const { cpfFieldRef, onCpfInput, onCpfBlur } = useCpfFormField(cpf, {
+  scheduleCheck,
+  resetCpfCheck,
+})
 
 watch(
   () => props.citizen,
@@ -66,12 +72,6 @@ const showCpfValid = computed(
 
 function close() {
   emit('update:modelValue', false)
-}
-
-function onCpfInput(value) {
-  cpf.value = mask(value)
-  resetCpfCheck()
-  scheduleCheck(cpf.value)
 }
 
 function submit() {
@@ -146,15 +146,17 @@ function submit() {
               CPF <span class="ui-required">*</span>
             </label>
             <v-text-field
+              ref="cpfFieldRef"
               :model-value="cpf"
               variant="outlined"
               density="comfortable"
               hide-details
-              class="app-modal__field-input"
+              class="app-modal__field-input cpf-field-autofill"
               :class="{ 'app-modal__field-input--error': showCpfInvalid }"
               maxlength="14"
               :disabled="loading"
               @update:model-value="onCpfInput"
+              @blur="onCpfBlur"
             />
             <div v-if="showCpfInvalid" class="app-modal__field-hint app-modal__field-hint--error">
               <v-icon size="18">mdi-close-circle-outline</v-icon>

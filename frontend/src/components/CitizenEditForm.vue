@@ -2,6 +2,7 @@
 import { ref, watch, computed } from 'vue'
 import { useCpfMask } from '@/composables/useCpfMask'
 import { useCpfAvailability } from '@/composables/useCpfAvailability'
+import { useCpfFormField } from '@/composables/useCpfFormField'
 import { isValidName, NAME_VALIDATION_MESSAGE } from '@/composables/useNameValidation'
 
 const props = defineProps({
@@ -21,6 +22,11 @@ const {
 
 const name = ref('')
 const cpf = ref('')
+
+const { cpfFieldRef, onCpfInput, onCpfBlur } = useCpfFormField(cpf, {
+  scheduleCheck,
+  resetCpfCheck,
+})
 
 watch(
   () => props.citizen,
@@ -49,12 +55,6 @@ const showCpfValid = computed(
 
 const isFormValid = () =>
   isValidName(name.value) && isValid(cpf.value) && !cpfRegistered.value && !cpfChecking.value
-
-function onCpfInput(value) {
-  cpf.value = mask(value)
-  resetCpfCheck()
-  scheduleCheck(cpf.value)
-}
 
 function handleSave() {
   if (!isFormValid()) return
@@ -87,14 +87,16 @@ defineExpose({ submit: handleSave })
       <div class="cpf-row">
         <div class="cpf-row__field">
           <v-text-field
+            ref="cpfFieldRef"
             :model-value="cpf"
             variant="outlined"
             density="comfortable"
             hide-details
-            class="field-input"
+            class="field-input cpf-field-autofill"
             maxlength="14"
             :disabled="loading"
             @update:model-value="onCpfInput"
+            @blur="onCpfBlur"
           />
         </div>
         <div v-if="showCpfInvalid" class="cpf-row__status">

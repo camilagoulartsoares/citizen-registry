@@ -1570,6 +1570,19 @@ body {
   font-weight: 500 !important;
 }
 
+/* Detecta autofill do navegador no campo CPF (Chrome/Safari) */
+@keyframes cpf-autofill-start {
+  from {
+  }
+  to {
+  }
+}
+
+.cpf-field-autofill input:-webkit-autofill {
+  animation-name: cpf-autofill-start;
+  animation-duration: 0.01s;
+}
+
 .app-root {
   background: var(--color-bg) !important;
 }

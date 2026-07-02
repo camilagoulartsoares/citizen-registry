@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useCitizen } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
 import { useCpfAvailability } from '@/composables/useCpfAvailability'
+import { useCpfFormField } from '@/composables/useCpfFormField'
 import { isValidName, NAME_VALIDATION_MESSAGE } from '@/composables/useNameValidation'
 
 const {
@@ -10,7 +11,7 @@ const {
   clearError,
   createCitizen,
 } = useCitizen()
-const { mask, unmask, isValid } = useCpfMask()
+const { unmask, isValid } = useCpfMask()
 const {
   isRegistered: cpfRegistered,
   checking: cpfChecking,
@@ -23,6 +24,12 @@ const name = ref('')
 const cpf = ref('')
 const createdCitizen = ref(null)
 const copySuccess = ref(false)
+
+const { cpfFieldRef, onCpfInput, onCpfBlur, pollAutofillAfterName } = useCpfFormField(cpf, {
+  scheduleCheck,
+  resetCpfCheck,
+  onApply: clearError,
+})
 
 const isNameValid = computed(() => isValidName(name.value))
 const isCpfValid = computed(() => isValid(cpf.value))
@@ -43,15 +50,9 @@ const showCpfValid = computed(
   () => isCpfValid.value && !cpfRegistered.value && !cpfChecking.value,
 )
 
-function onCpfInput(value) {
-  cpf.value = mask(value)
-  clearError()
-  resetCpfCheck()
-  scheduleCheck(cpf.value)
-}
-
 function onNameInput() {
   clearError()
+  pollAutofillAfterName()
 }
 
 async function handleSubmit() {
@@ -149,16 +150,18 @@ function resetForm() {
       <div class="mb-6 form-field">
         <label class="ui-field-label">CPF</label>
         <v-text-field
+          ref="cpfFieldRef"
           :model-value="cpf"
           placeholder="000.000.000-00"
           variant="outlined"
           density="comfortable"
           hide-details
-          class="field-input"
+          class="field-input cpf-field-autofill"
           prepend-inner-icon="mdi-card-account-details-outline"
           :disabled="loading"
           maxlength="14"
           @update:model-value="onCpfInput"
+          @blur="onCpfBlur"
         />
         <div class="field-hint-slot field-hint-slot--cpf" aria-live="polite">
           <div
