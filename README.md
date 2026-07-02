@@ -239,6 +239,8 @@ npm run test:e2e
 npm run test:all
 ```
 
+> **Histórico de testes:** a aba [**Actions**](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml) do GitHub mostra cada execução da CI (Backend/Jest, Frontend/Vitest, E2E/Playwright). A aba **Deployments** registra apenas releases de produção (um por push em `main`), não o histórico de testes.
+
 ---
 
 ## 🏗 Arquitetura
