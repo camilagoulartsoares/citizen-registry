@@ -39,3 +39,5 @@ frontend/node_modules/.vite/
 # Playwright
 test-results/
 playwright-report/
+.vercel
+.env*
