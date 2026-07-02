@@ -1,6 +1,6 @@
 # Cadastro CPF
 
-[![CI](https://github.com/camilagoulartsoares/citizen-registry-system/actions/workflows/ci.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry-system/actions/workflows/ci.yml)
+[![CI](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml)
 
 Sistema web para **cadastro e consulta de cidadãos brasileiros por CPF**. Desenvolvido como entrega de desafio técnico full stack, com API REST em Node.js, interface em Vue 3, validações de negócio, persistência em SQLite e ambiente publicado em produção.
 
@@ -30,7 +30,7 @@ O GIF apresenta o fluxo principal da aplicação:
 | **Backend (Render)** | [**citizen-registry-system-backend.onrender.com**](https://citizen-registry-system-backend.onrender.com) |
 | **Swagger** | [**/api-docs**](https://citizen-registry-system-backend.onrender.com/api-docs) |
 | **Health Check** | [**/health**](https://citizen-registry-system-backend.onrender.com/health) |
-| **GitHub** | [**camilagoulartsoares/citizen-registry-system**](https://github.com/camilagoulartsoares/citizen-registry-system) |
+| **GitHub** | [**camilagoulartsoares/citizen-registry**](https://github.com/camilagoulartsoares/citizen-registry) |
 
 > A raiz do backend (`/`) redireciona automaticamente para o Swagger.
 
@@ -143,8 +143,8 @@ Além dos requisitos obrigatórios, o sistema entrega um fluxo administrativo co
 ### Instalação e execução
 
 ```bash
-git clone https://github.com/camilagoulartsoares/citizen-registry-system.git
-cd citizen-registry-system
+git clone https://github.com/camilagoulartsoares/citizen-registry.git
+cd citizen-registry
 npm install
 npm run install:all
 npm run dev
