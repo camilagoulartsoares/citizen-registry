@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -81,7 +82,7 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: [e2e]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     environment:
       name: production
       url: https://citizen-registry-system.vercel.app
@@ -92,22 +93,43 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const deployment = await github.rest.repos.createDeployment({
+            const productionUrl = 'https://citizen-registry-system.vercel.app';
+            const logUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            let deploymentId;
+
+            const existing = await github.rest.repos.listDeployments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.sha,
+              sha: context.sha,
               environment: 'production',
-              auto_merge: false,
-              required_contexts: [],
-              description: 'Produção no Vercel (citizen-registry-system.vercel.app)'
+              per_page: 1
             });
-            if (deployment.status === 201) {
-              await github.rest.repos.createDeploymentStatus({
+
+            if (existing.data.length > 0) {
+              deploymentId = existing.data[0].id;
+            } else {
+              const deployment = await github.rest.repos.createDeployment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                deployment_id: deployment.data.id,
-                state: 'success',
-                environment_url: 'https://citizen-registry-system.vercel.app',
-                description: 'Live no Vercel'
+                ref: context.sha,
+                environment: 'production',
+                production_environment: true,
+                auto_merge: false,
+                required_contexts: [],
+                description: 'Produção no Vercel (citizen-registry-system.vercel.app)'
               });
+              deploymentId = deployment.data.id;
             }
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deploymentId,
+              state: 'success',
+              environment: 'production',
+              environment_url: productionUrl,
+              log_url: logUrl,
+              description: 'Live no Vercel — CI passou',
+              auto_inactive: true
+            });
