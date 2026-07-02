@@ -175,14 +175,14 @@ docker compose up --build
 
 ## 🧪 Testes
 
-Foram implementados **79 testes automatizados**, cobrindo backend, frontend e testes end-to-end.
+Foram implementados **83 testes automatizados**, cobrindo backend, frontend e testes end-to-end.
 
 | Camada | Quantidade |
 |--------|------------|
-| Backend (Jest) | 60 |
-| Frontend (Vitest) | 16 |
+| Backend (Jest) | 63 |
+| Frontend (Vitest) | 17 |
 | E2E (Playwright) | 3 |
-| **Total** | **79** |
+| **Total** | **83** |
 
 ### Backend
 
@@ -241,7 +241,7 @@ npm run test:e2e
 npm run test:all
 ```
 
-> **Histórico de testes:** a aba [**Actions**](https://github.com/camilagoulartsoares/citizen-registry/actions) do GitHub lista workflows separados — [Backend (Jest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/backend-tests.yml), [Frontend (Vitest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/frontend-tests.yml) e [E2E (Playwright)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/e2e-tests.yml). O workflow [Deploy to Production](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/deploy-production.yml) roda após os três passarem em `main`. A aba **Deployments** registra apenas releases de produção (um por push em `main`), não o histórico de testes.
+> **Histórico de testes:** a aba [**Actions**](https://github.com/camilagoulartsoares/citizen-registry/actions) do GitHub lista workflows separados — [Backend (Jest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/backend-tests.yml), [Frontend (Vitest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/frontend-tests.yml) e [E2E (Playwright)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/e2e-tests.yml). Em cada execução, a aba **Tests** (ou o check *Test Results*) exibe **cada caso de teste individualmente** — 63 no backend, 17 no frontend e 3 E2E — para revisão por recrutadores e avaliadores técnicos. O workflow [Deploy to Production](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/deploy-production.yml) roda após os três passarem em `main`. A aba **Deployments** registra apenas releases de produção (um por push em `main`), não o histórico de testes.
 
 ---
 
@@ -345,7 +345,7 @@ Itens que **não faziam parte do escopo mínimo** do desafio, entregues como evo
 |-------------|-----------|
 | **Clean Architecture** | Backend em camadas: Domain → Application → Infrastructure → HTTP |
 | **Swagger / OpenAPI 3.0** | Documentação interativa com `swagger-jsdoc` e `swagger-ui-express` |
-| **79 testes automatizados** | Jest, Vitest, Supertest e Playwright |
+| **83 testes automatizados** | Jest, Vitest, Supertest e Playwright |
 | **GitHub Actions (CI)** | Pipeline com testes de backend, frontend e E2E |
 | **Deploy Render + Vercel** | Backend e frontend publicados separadamente em produção |
 | **Docker** | `Dockerfile` e `docker-compose.yml` para execução containerizada |

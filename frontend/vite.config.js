@@ -32,6 +32,10 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.js'],
       globals: true,
+      reporters: process.env.CI ? ['default', 'junit'] : ['default'],
+      outputFile: {
+        junit: 'test-results/junit.xml',
+      },
       server: {
         deps: {
           inline: ['vuetify'],
