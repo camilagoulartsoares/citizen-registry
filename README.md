@@ -1,8 +1,6 @@
 # Cadastro CPF
 
-[![Backend (Jest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/backend-tests.yml)
-[![Frontend (Vitest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/frontend-tests.yml)
-[![E2E (Playwright)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/e2e-tests.yml)
+[![CI](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml)
 
 Sistema web para **cadastro e consulta de cidadãos brasileiros por CPF**. Desenvolvido como entrega de desafio técnico full stack, com API REST em Node.js, interface em Vue 3, validações de negócio, persistência em SQLite e ambiente publicado em produção.
 
@@ -241,7 +239,7 @@ npm run test:e2e
 npm run test:all
 ```
 
-> **Histórico de testes no CI:** a aba [**Actions**](https://github.com/camilagoulartsoares/citizen-registry/actions) lista workflows separados — [Backend (Jest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/backend-tests.yml), [Frontend (Vitest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/frontend-tests.yml) e [E2E (Playwright)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/e2e-tests.yml). Cada workflow publica **apenas os seus** resultados na aba **Tests** do run: o Backend exibe os 63 testes da API (Jest/Supertest); o Frontend exibe os 17 testes de componentes e composables Vue (Vitest); o E2E exibe os 3 testes de fluxo completo no navegador (Playwright). O workflow [Deploy to Production](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/deploy-production.yml) roda após os três passarem em `main` e registra somente o deployment no Vercel — **sem** publicar testes.
+> **Histórico de testes no CI:** cada push ou PR em `main` dispara **um único workflow** [CI](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml) com **4 jobs** — uma linha na aba [**Actions**](https://github.com/camilagoulartsoares/citizen-registry/actions), sem entradas duplicadas por commit. Ao expandir o run, cada job publica os seus resultados na aba **Tests**: **Backend (Jest)** — 63 testes da API; **Frontend (Vitest)** — 17 testes de componentes e composables Vue; **E2E (Playwright)** — 3 testes de fluxo completo no navegador (**83 no total**). O job **Deploy to Production** roda somente em push para `main`, após os três passarem, e registra o deployment no Vercel — **sem** publicar testes.
 
 ---
 
@@ -288,10 +286,7 @@ Visão resumida das pastas principais. Arquivos gerados localmente (`node_module
 citizen-registry/
 ├── .github/
 │   └── workflows/
-│       ├── backend-tests.yml   # Backend (Jest)
-│       ├── frontend-tests.yml  # Frontend (Vitest)
-│       ├── e2e-tests.yml       # E2E (Playwright)
-│       ├── deploy-production.yml
+│       ├── ci.yml              # CI unificado (4 jobs: backend, frontend, E2E, deploy)
 │       └── keep-alive.yml
 ├── backend/
 │   ├── src/
