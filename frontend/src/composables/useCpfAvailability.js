@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { citizenApi } from '@/services/api'
 import { useCpfMask } from '@/composables/useCpfMask'
+import { whenBackendReady } from '@/services/warmup'
 
 /** Enquanto digita — evita spam a cada tecla */
 const DEBOUNCE_TYPING_MS = 400
@@ -66,6 +67,14 @@ export function useCpfAvailability(getExcludeCpf = () => null) {
 
     debounceId = setTimeout(async () => {
       debounceId = null
+
+      const ready = import.meta.env.PROD ? await whenBackendReady() : true
+      if (currentRequest !== requestId) return
+      if (!ready) {
+        checking.value = false
+        return
+      }
+
       try {
         const response = await citizenApi.checkCpf(digits)
         const found = Boolean(response.data?.exists)

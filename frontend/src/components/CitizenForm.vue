@@ -4,6 +4,7 @@ import { useCitizen } from '@/composables/useCitizen'
 import { useCpfMask } from '@/composables/useCpfMask'
 import { useCpfAvailability } from '@/composables/useCpfAvailability'
 import { useCpfFormField } from '@/composables/useCpfFormField'
+import { useBackendConnection } from '@/composables/useBackendConnection'
 import { isValidName, NAME_VALIDATION_MESSAGE } from '@/composables/useNameValidation'
 
 const {
@@ -19,6 +20,13 @@ const {
   reset: resetCpfCheck,
   markRegistered: markCpfRegistered,
 } = useCpfAvailability()
+const isProd = import.meta.env.PROD
+const {
+  isConnecting: backendConnecting,
+  isReady: backendReady,
+  isFailed: backendFailed,
+  retryWarmBackend,
+} = useBackendConnection()
 
 const name = ref('')
 const cpf = ref('')
@@ -34,8 +42,18 @@ const { cpfFieldRef, onCpfInput, onCpfBlur, pollAutofillAfterName } = useCpfForm
 const isNameValid = computed(() => isValidName(name.value))
 const isCpfValid = computed(() => isValid(cpf.value))
 const isFormValid = computed(
-  () => isNameValid.value && isCpfValid.value && !cpfRegistered.value && !cpfChecking.value,
+  () =>
+    (!isProd || backendReady.value) &&
+    isNameValid.value &&
+    isCpfValid.value &&
+    !cpfRegistered.value &&
+    !cpfChecking.value,
 )
+
+const formDisabled = computed(
+  () => loading.value || (isProd && (backendConnecting.value || backendFailed.value)),
+)
+const showCpfChecking = computed(() => cpfChecking.value && (!isProd || backendReady.value))
 
 const showNameInvalid = computed(() => {
   const trimmed = name.value.trim()
@@ -47,12 +65,23 @@ const showCpfStatus = computed(() => cpfDigits.value.length > 0)
 const showCpfInvalid = computed(() => showCpfStatus.value && !isCpfValid.value)
 const showCpfDuplicate = computed(() => isCpfValid.value && cpfRegistered.value)
 const showCpfValid = computed(
-  () => isCpfValid.value && !cpfRegistered.value && !cpfChecking.value,
+  () =>
+    (!isProd || backendReady.value) &&
+    isCpfValid.value &&
+    !cpfRegistered.value &&
+    !cpfChecking.value,
 )
 
 function onNameInput() {
   clearError()
   pollAutofillAfterName()
+}
+
+async function onRetryConnection() {
+  const ok = await retryWarmBackend()
+  if (ok && isCpfValid.value) {
+    scheduleCheck(cpf.value)
+  }
 }
 
 async function handleSubmit() {
@@ -123,6 +152,37 @@ function resetForm() {
     </div>
 
     <v-form v-else class="citizen-form" @submit.prevent="handleSubmit">
+      <div
+        v-if="isProd"
+        class="field-hint field-hint--checking citizen-form__connecting"
+        :class="{ 'field-hint--hidden': !backendConnecting }"
+        aria-live="polite"
+      >
+        <v-progress-circular indeterminate size="18" width="2" color="primary" />
+        <span>Conectando ao servidor...</span>
+      </div>
+
+      <v-alert
+        v-if="isProd && backendFailed"
+        type="warning"
+        variant="tonal"
+        density="compact"
+        class="citizen-form__connection-alert mb-4"
+      >
+        <div class="citizen-form__connection-alert-body">
+          <span>Não foi possível conectar ao servidor. Tente novamente.</span>
+          <v-btn
+            size="small"
+            variant="outlined"
+            color="warning"
+            class="text-none"
+            @click="onRetryConnection"
+          >
+            Tentar novamente
+          </v-btn>
+        </div>
+      </v-alert>
+
       <div class="mb-5 form-field">
         <label class="ui-field-label">Nome completo</label>
         <v-text-field
@@ -133,7 +193,7 @@ function resetForm() {
           hide-details
           class="field-input"
           prepend-inner-icon="mdi-account-outline"
-          :disabled="loading"
+          :disabled="formDisabled"
           @update:model-value="onNameInput"
         />
         <div class="field-hint-slot" aria-live="polite">
@@ -158,7 +218,7 @@ function resetForm() {
           hide-details
           class="field-input cpf-field-autofill"
           prepend-inner-icon="mdi-card-account-details-outline"
-          :disabled="loading"
+          :disabled="formDisabled"
           maxlength="14"
           @update:model-value="onCpfInput"
           @blur="onCpfBlur"
@@ -182,7 +242,7 @@ function resetForm() {
 
           <div
             class="field-hint field-hint--checking"
-            :class="{ 'field-hint--hidden': !cpfChecking }"
+            :class="{ 'field-hint--hidden': !showCpfChecking }"
           >
             <v-progress-circular indeterminate size="18" width="2" color="primary" />
             <span>Verificando CPF...</span>
@@ -202,7 +262,7 @@ function resetForm() {
         type="submit"
         block
         class="ui-btn-primary citizen-form__submit"
-        :disabled="!isFormValid || loading"
+        :disabled="!isFormValid || formDisabled"
         :loading="loading"
       >
         Cadastrar cidadão
@@ -291,6 +351,18 @@ function resetForm() {
   display: flex;
   flex-direction: column;
   min-height: 100%;
+}
+
+.citizen-form__connecting {
+  margin-bottom: 16px;
+}
+
+.citizen-form__connection-alert-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
 .citizen-form__submit {

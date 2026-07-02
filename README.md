@@ -369,6 +369,22 @@ Itens que **não faziam parte do escopo mínimo** do desafio, entregues como evo
 | **Render (backend)** | Root Directory: `backend` · Start: `npm start` · Disco persistente para SQLite |
 | **Vercel (frontend)** | Build em `frontend/dist` · `VITE_API_URL=https://citizen-registry-system-backend.onrender.com` |
 
+### Cold start no Render (plano free)
+
+No plano gratuito do Render, o backend **entra em sleep após ~15 minutos sem requisições**. A primeira chamada depois disso pode levar **30–90 segundos** para responder — o chamado *cold start*.
+
+**O que o frontend faz em produção:**
+
+1. Ao carregar a página, chama `GET /health` em background (`warmBackend()` em `main.js`) para acordar o servidor antes do usuário interagir.
+2. Enquanto o warmup não conclui, exibe o banner **"Conectando ao servidor..."**, desabilita o formulário e adia a verificação de CPF duplicado.
+3. Se a conexão falhar, mostra alerta com botão **"Tentar novamente"**.
+
+**Por que isso não aparece em desenvolvimento:**
+
+Localmente o backend roda em `localhost:3000` e responde na hora. Bloquear o formulário com banner de conexão só atrapalharia o fluxo de dev/teste. Por isso todo esse UX de warmup usa `import.meta.env.PROD` — ativo apenas no build de produção (Vercel).
+
+**Complemento opcional:** o workflow `keep-alive.yml` pode pingar `/health` via UptimeRobot (ou cron do GitHub Actions) para reduzir cold starts fora do horário de uso. O warmup no frontend continua necessário para a **primeira visita** de cada sessão.
+
 ---
 
 ## 👩 Autor

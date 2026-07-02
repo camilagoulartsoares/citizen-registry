@@ -16,6 +16,15 @@ vi.mock('@/composables/useCitizen', () => ({
   }),
 }))
 
+vi.mock('@/composables/useBackendConnection', () => ({
+  useBackendConnection: () => ({
+    isConnecting: ref(false),
+    isReady: ref(true),
+    isFailed: ref(false),
+    retryWarmBackend: vi.fn(),
+  }),
+}))
+
 function mountForm() {
   return mount(CitizenForm, {
     global: {
