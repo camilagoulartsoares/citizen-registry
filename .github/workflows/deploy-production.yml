@@ -1,0 +1,103 @@
+name: Deploy to Production
+
+on:
+  workflow_run:
+    workflows:
+      - Backend (Jest)
+      - Frontend (Vitest)
+      - E2E (Playwright)
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  deployments: write
+  actions: read
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    environment:
+      name: production
+      url: https://citizen-registry-system.vercel.app
+    steps:
+      - name: Verificar se todos os testes passaram
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha;
+            const required = ['Backend (Jest)', 'Frontend (Vitest)', 'E2E (Playwright)'];
+
+            const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: sha,
+              branch: 'main',
+              per_page: 100
+            });
+
+            for (const name of required) {
+              const run = data.workflow_runs.find(r => r.name === name);
+              if (!run || run.status !== 'completed') {
+                core.info(`"${name}" ainda não concluiu para ${sha}; aguardando demais workflows.`);
+                return;
+              }
+              if (run.conclusion !== 'success') {
+                core.setFailed(`"${name}" não passou para ${sha} (conclusão: ${run.conclusion}).`);
+                return;
+              }
+            }
+
+            core.info(`Todos os testes passaram para ${sha}; prosseguindo com deploy.`);
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Registrar deployment de produção
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const productionUrl = 'https://citizen-registry-system.vercel.app';
+            const logUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const testSummary = 'Testes passaram: Backend (Jest), Frontend (Vitest), E2E (Playwright)';
+
+            const existing = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.workflow_run.head_sha,
+              environment: 'production',
+              per_page: 1
+            });
+
+            if (existing.data.length > 0) {
+              console.log(`Deployment de produção já existe para ${context.payload.workflow_run.head_sha}; ignorando duplicata.`);
+              return;
+            }
+
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.payload.workflow_run.head_sha,
+              environment: 'production',
+              production_environment: true,
+              auto_merge: false,
+              required_contexts: [],
+              description: `${testSummary} — ver Actions run`
+            });
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'success',
+              environment: 'production',
+              environment_url: productionUrl,
+              log_url: logUrl,
+              description: `${testSummary}. Live no Vercel.`,
+              auto_inactive: true
+            });

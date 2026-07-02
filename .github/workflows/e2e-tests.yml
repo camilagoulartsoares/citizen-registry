@@ -1,0 +1,41 @@
+name: E2E (Playwright)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências
+        run: |
+          npm ci
+          npm ci --prefix backend
+          npm ci --prefix frontend
+
+      - name: Instalar Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Build do frontend
+        run: VITE_API_URL=http://127.0.0.1:3001 npm run build --prefix frontend
+        env:
+          CI: true
+
+      - name: Rodar testes E2E
+        run: npm run test:e2e
+        env:
+          CI: true

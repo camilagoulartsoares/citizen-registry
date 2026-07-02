@@ -1,6 +1,8 @@
 # Cadastro CPF
 
-[![CI](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml)
+[![Backend (Jest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/backend-tests.yml)
+[![Frontend (Vitest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/frontend-tests.yml)
+[![E2E (Playwright)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/e2e-tests.yml)
 
 Sistema web para **cadastro e consulta de cidadãos brasileiros por CPF**. Desenvolvido como entrega de desafio técnico full stack, com API REST em Node.js, interface em Vue 3, validações de negócio, persistência em SQLite e ambiente publicado em produção.
 
@@ -239,7 +241,7 @@ npm run test:e2e
 npm run test:all
 ```
 
-> **Histórico de testes:** a aba [**Actions**](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/ci.yml) do GitHub mostra cada execução da CI (Backend/Jest, Frontend/Vitest, E2E/Playwright). A aba **Deployments** registra apenas releases de produção (um por push em `main`), não o histórico de testes.
+> **Histórico de testes:** a aba [**Actions**](https://github.com/camilagoulartsoares/citizen-registry/actions) do GitHub lista workflows separados — [Backend (Jest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/backend-tests.yml), [Frontend (Vitest)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/frontend-tests.yml) e [E2E (Playwright)](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/e2e-tests.yml). O workflow [Deploy to Production](https://github.com/camilagoulartsoares/citizen-registry/actions/workflows/deploy-production.yml) roda após os três passarem em `main`. A aba **Deployments** registra apenas releases de produção (um por push em `main`), não o histórico de testes.
 
 ---
 
@@ -286,7 +288,11 @@ Visão resumida das pastas principais. Arquivos gerados localmente (`node_module
 citizen-registry/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml              # Pipeline GitHub Actions
+│       ├── backend-tests.yml   # Backend (Jest)
+│       ├── frontend-tests.yml  # Frontend (Vitest)
+│       ├── e2e-tests.yml       # E2E (Playwright)
+│       ├── deploy-production.yml
+│       └── keep-alive.yml
 ├── backend/
 │   ├── src/
 │   │   ├── domain/             # Entidades e validadores (CPF, nome)
