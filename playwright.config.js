@@ -12,7 +12,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI
-    ? [['list'], ['junit', { outputFile: 'test-results/junit.xml' }]]
+    ? [['list'], ['junit', { outputFile: 'e2e/test-results/playwright-junit.xml' }]]
     : 'list',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || frontendUrl,

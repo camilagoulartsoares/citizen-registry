@@ -36,8 +36,11 @@ coverage/
 # Vite
 frontend/node_modules/.vite/
 
-# Playwright
+# Playwright / CI junit (caminhos distintos por workflow)
 test-results/
+backend/test-results/
+frontend/test-results/
+e2e/test-results/
 playwright-report/
 .vercel
 .env*

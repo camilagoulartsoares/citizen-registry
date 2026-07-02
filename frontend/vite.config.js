@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       reporters: process.env.CI ? ['default', 'junit'] : ['default'],
       outputFile: {
-        junit: 'test-results/junit.xml',
+        junit: 'test-results/vitest-junit.xml',
       },
       server: {
         deps: {

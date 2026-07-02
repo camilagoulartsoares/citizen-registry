@@ -1,5 +1,7 @@
 name: Backend (Jest)
 
+run-name: Backend (Jest) — testes da API
+
 on:
   push:
     branches: [main]
@@ -10,7 +12,6 @@ on:
 permissions:
   contents: read
   checks: write
-  pull-requests: write
 
 jobs:
   test:
@@ -34,9 +35,10 @@ jobs:
           CI: true
 
       - name: Publicar resultados dos testes
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: dorny/test-reporter@v1
         if: always()
         with:
-          files: backend/test-results/junit.xml
-          check_name: Backend (Jest)
-          comment_title: Backend (Jest)
+          name: Backend (Jest)
+          path: backend/test-results/jest-junit.xml
+          reporter: java-junit
+          fail-on-error: false
